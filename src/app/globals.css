@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.loading-anim {
+  display: flex;
+  justify-content: space-between;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.loading-anim > span {
+  height: 100%;
+  width: 4px;
+  background-color: rgb(166, 166, 166);
+  opacity: 0.2;
+  border-radius: 4px;
+  animation: 0.6s ease-in-out 0s infinite normal none running loading-kf;
+  transform-origin: center center;
+}
+
+@keyframes loading-kf {
+  0%, 100% {
+    transform: scaleY(0.4);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
