@@ -176,10 +176,10 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Main Body - Category Grid */}
-      <div className="container mx-auto px-4 py-6 grid sm:grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-5 max-w-screen-lg">
+      {/* Main Body - Category Masonry */}
+      <div className="container mx-auto px-4 py-6 columns-1 sm:columns-2 md:columns-3 gap-x-5 max-w-screen-lg">
         {categories.map((cat) => (
-          <details key={cat.title} className="break-inside-avoid group cursor-pointer">
+          <details key={cat.title} className="break-inside-avoid group cursor-pointer mb-4">
             <summary className="cursor-pointer flex flex-row items-center justify-between pl-3 pt-2 pb-3 bg-white group-open:bg-slate-50 border border-slate-400 shadow-sm rounded-lg group-open:rounded-b-none min-h-[90px]">
               <div className="flex-1">
                 <h2 className="text-lg font-bold text-slate-700">{cat.title}</h2>
