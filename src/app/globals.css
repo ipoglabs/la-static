@@ -35,3 +35,33 @@
     opacity: 1;
   }
 }
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+  }
+  :root {
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 222 84% 4.9%;
+  --background: 0 0% 100%;
+  --foreground: 222 84% 4.9%;
+  --primary: 222 47% 11%;
+  --secondary: 210 40% 96%;
+  --destructive: 0 84% 60%;
+  --muted: 210 40% 96%;
+  --accent: 210 40% 96%;
+  --popover: 0 0% 100%;
+  --card: 0 0% 100%;
+}
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

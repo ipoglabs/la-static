@@ -32,13 +32,15 @@ const BadgeCheckIcon = () => (
 );
 
 /* ─────────────────────────────────────────────
-   Shared section card style
+   Section card — no side borders on mobile,
+   full border + rounded + shadow from sm up.
+   Matches HTML: border-y sm:rounded-md sm:border sm:shadow-md
 ───────────────────────────────────────────── */
 const sectionCls =
   "bg-white px-4 py-5 border-y border-slate-900/25 sm:rounded-md sm:border sm:shadow-black/10 sm:shadow-md";
 
 /* ─────────────────────────────────────────────
-   ChitChat component (shared mobile + desktop)
+   ChitChat
 ───────────────────────────────────────────── */
 function ChitChat({ sendIconOnly = false }: { sendIconOnly?: boolean }) {
   const [message, setMessage] = useState("");
@@ -62,7 +64,7 @@ function ChitChat({ sendIconOnly = false }: { sendIconOnly?: boolean }) {
           </div>
           <div className="flex justify-end">
             <div className="bg-blue-500 rounded-lg px-4 py-2 max-w-[80%]">
-              <p className="text-white text-sm">I am good, thank you! Could you please help share your number to call you over WhatsUp?</p>
+              <p className="text-white text-sm">I am good, thank you! Could you please help share your number to call you over WhatsApp?</p>
             </div>
           </div>
         </div>
@@ -91,7 +93,7 @@ function ChitChat({ sendIconOnly = false }: { sendIconOnly?: boolean }) {
 }
 
 /* ─────────────────────────────────────────────
-   KeyDetailsTable component
+   KeyDetailsTable
 ───────────────────────────────────────────── */
 function KeyDetailsTable({ title, rows }: { title: string; rows: [string, string][] }) {
   return (
@@ -135,8 +137,8 @@ export default function PostDetailsPage() {
       {/* ── MAIN BODY ── */}
       <div className="max-w-screen-2xl mx-auto sm:px-6 md:px-12 lg:px-20 xl:px-28 flex flex-col gap-y-2 items-stretch flex-nowrap">
 
-        {/* Breadcrumb */}
-        <div className="bg-slate-800 -mx-4 sm:mx-0 sm:rounded-b-md">
+        {/* Breadcrumb — flush on mobile, rounded bottom on sm+ */}
+        <div className="bg-slate-800 sm:rounded-b-md">
           <div className="px-4 sm:px-6 h-9 flex items-center">
             <ul className="flex items-center">
               <li className="inline-flex items-center">
@@ -163,7 +165,7 @@ export default function PostDetailsPage() {
             <div className="flex-1" />
 
             <Link href="#" className="group flex items-center gap-2 text-slate-200 text-sm font-semibold">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6 rotate-12">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-8 rotate-12">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
               </svg>
               <span className="max-sm:hidden">Create Alert</span>
@@ -171,8 +173,8 @@ export default function PostDetailsPage() {
           </div>
         </div>
 
-        {/* Title */}
-        <div className="flex flex-col items-stretch bg-white px-4 py-4 border-b border-slate-900/25 sm:rounded-md sm:border sm:shadow-md sm:shadow-black/10">
+        {/* Title — flush on mobile, rounded bottom + side borders on sm+ */}
+        <div className="flex flex-col items-stretch bg-white px-4 py-4 border-b border-slate-900/25 sm:rounded-b-md sm:border-x sm:border-b sm:shadow-md sm:shadow-black/10">
           <h2 className="font-semibold text-xl text-gray-800">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.
           </h2>
@@ -201,17 +203,18 @@ export default function PostDetailsPage() {
           <div className="flex flex-col flex-nowrap gap-y-2 col-span-1 md:col-span-2">
 
             {/* Gallery */}
-            <section className={sectionCls}>
+            <section className="bg-white px-4 py-5 flex flex-col items-stretch gap-3 border-y border-slate-900/25 sm:rounded-md sm:border sm:shadow-black/10 sm:shadow-md">
               <div className="flex flex-col gap-1">
-                <div className="inline-block bg-slate-400 h-48 w-full rounded" />
+                {/* Main image — full width, no rounded on mobile */}
+                <div className="bg-slate-400 h-48 w-full" />
                 <div className="flex flex-row gap-1">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="size-12 bg-slate-400 rounded" />
+                    <div key={i} className="size-12 bg-slate-400" />
                   ))}
                 </div>
               </div>
 
-              <div className="flex flex-row items-start gap-2 mt-3">
+              <div className="flex flex-row items-start gap-2">
                 <div className="font-bold text-2xl text-gray-800">$4500<span className="text-lg">pcm</span></div>
                 <span className="flex-1" />
                 <button className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-200">
@@ -240,7 +243,7 @@ export default function PostDetailsPage() {
                     className="object-cover object-center h-32"
                   />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-xl text-gray-800 mb-1">Jannet Willson</h3>
                   <p className="-mt-1 mb-3 text-sm text-slate-600">
                     Property Agent, located in Dartford, Kent |{" "}
@@ -266,12 +269,12 @@ export default function PostDetailsPage() {
                   </div>
                 </div>
               </div>
-              <div className="my-2 text-xs text-[14px] text-slate-700 leading-4">
+              <div className="my-2 text-[14px] text-slate-700 leading-4">
                 <span>Loyal user since 2021</span> | <span>37 active Listing</span> | <span>Active: 2d ago</span>
               </div>
             </section>
 
-            {/* CTA — mobile only */}
+            {/* CTA — mobile only. -mt-4 z-10 overlaps the seller section bottom */}
             <section className="md:hidden bg-slate-700 p-3 sm:rounded-b-md sm:shadow-black/10 sm:shadow-md flex flex-row flex-nowrap items-center gap-3 -mt-4 z-10">
               <button className="flex-1 bg-blue-500 rounded-lg h-11 text-white font-semibold">
                 <div className="flex gap-3 justify-center items-center">

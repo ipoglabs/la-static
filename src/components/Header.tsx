@@ -43,7 +43,7 @@ export default function Header() {
           {/* Post (Mobile) */}
           <Link
             href="#"
-            className="size-7 bg-rose-500 hover:bg-rose-600 flex items-center justify-center rounded-full text-white text-sm font-medium mr-2 sm:hidden"
+            className="size-9 bg-rose-500 hover:bg-rose-600 flex items-center justify-center rounded-full text-white text-sm font-medium mr-2 sm:hidden"
           >
             +
           </Link>

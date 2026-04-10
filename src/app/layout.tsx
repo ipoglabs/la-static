@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   description: 'Find anything with LokalAds',
 }
 
-// ✅ MOVE viewport here (separate export)
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -24,11 +23,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-w-[375px]">
+      <body className="bg-slate-950/10 min-w-[375px]">
         
         <Header />
 
-        {children}
+        <main>{children}</main>
 
         <Footer />
 
