@@ -8,7 +8,7 @@ export default function ListingPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <div className="bg-slate-950/10 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
 
       {/* SEARCH BAR */}
       <div className="bg-slate-800 py-2">
@@ -67,6 +67,46 @@ export default function ListingPage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* BREADCRUMB BAR */}
+      <div className="bg-slate-50 border-b border-slate-200 py-1 flex items-center flex-wrap">
+        <div className="container mx-auto h-8 flex items-center px-4 sm:px-6 lg:px-16">
+          <ul className="flex items-center">
+            <li className="inline-flex items-center">
+              <Link href="/" className="text-slate-700 hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+              </Link>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-2 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </li>
+            <li className="inline-flex items-center">
+              <Link href="#" className="text-slate-700 hover:text-slate-900 text-sm font-semibold">
+                Main Category
+              </Link>
+              <svg xmlns="http://www.w3.org/2000/svg" className="mx-2 h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </li>
+            <li className="inline-flex items-center">
+              <Link href="#" className="text-slate-700 hover:text-slate-900 text-sm font-semibold">
+                Sub Category
+              </Link>
+            </li>
+          </ul>
+
+          <div className="flex-1" />
+
+          <Link href="#" className="group flex items-center gap-2 text-slate-700 hover:text-rose-700 text-sm font-semibold">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6 text-slate-600 group-hover:text-rose-700 rotate-12">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
+            </svg>
+            <span className="max-sm:hidden">Create Alert</span>
+          </Link>
+        </div>
       </div>
 
       {/* MAIN */}
@@ -160,7 +200,7 @@ export default function ListingPage() {
                     3 beds &bull; 2 baths &bull; Apartment
                   </div>
                   <div className="flex items-end text-xs font-normal text-slate-700 pt-2 pb-3">
-                    <span className="flex-1 pr-4 leading-normal">
+                    <span className="flex-1 pr-4 leading-normal text-base">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4 inline text-slate-500 -translate-y-0.5">
                         <path fillRule="evenodd" d="m7.539 14.841.003.003.002.002a.755.755 0 0 0 .912 0l.002-.002.003-.003.012-.009a5.57 5.57 0 0 0 .19-.153 15.588 15.588 0 0 0 2.046-2.082c1.101-1.362 2.291-3.342 2.291-5.597A5 5 0 0 0 3 7c0 2.255 1.19 4.235 2.292 5.597a15.591 15.591 0 0 0 2.046 2.082 8.916 8.916 0 0 0 .189.153l.012.01ZM8 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" clipRule="evenodd" />
                       </svg>
@@ -178,22 +218,16 @@ export default function ListingPage() {
       {/* ===================== MOBILE FILTER PANEL ===================== */}
       {drawerOpen && (
         <>
-          {/* Backdrop — clicking closes the panel */}
           <div
             className="fixed inset-0 bg-black/40 z-40 md:hidden"
             onClick={() => setDrawerOpen(false)}
           />
-
-          {/* Panel: right-14 = 56px gap on the right so it looks like a sidebar, not full screen */}
           <div className="fixed top-0 bottom-0 left-0 right-14 z-50 bg-white flex flex-col md:hidden shadow-2xl">
-
-            {/* Sticky Header */}
             <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-slate-200 flex-none">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5 text-slate-700 flex-none">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
               </svg>
               <h2 className="text-lg font-semibold text-slate-700 flex-1">Filters</h2>
-              {/* ✕ Close Icon */}
               <button
                 className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500 flex-none"
                 onClick={() => setDrawerOpen(false)}
@@ -203,13 +237,9 @@ export default function ListingPage() {
                 </svg>
               </button>
             </div>
-
-            {/* Scrollable Content only */}
             <div className="overflow-y-auto flex-1 px-4">
               <SidebarContent />
             </div>
-
-            {/* Sticky Footer */}
             <div className="px-4 py-3 border-t border-slate-200 flex-none">
               <button
                 className="w-full bg-slate-700 hover:bg-slate-900 rounded-full text-white text-sm text-center font-medium px-3 pt-1 pb-2"
