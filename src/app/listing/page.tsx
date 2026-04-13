@@ -3,19 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { useCountry } from "@/components/country/CountryProvider";
-
-export function MyComponent() {
-  const country = useCountry(); // "SG" | "IN" | "US" | "GB" | "AU" | "MY"
-  return <p>You are browsing from: {country}</p>;
-}
 
 export default function ListingPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-export function MyComponent() {
-  const country = useCountry(); // "SG" | "IN" | "US" | "GB" | "AU" | "MY"
-  return <p>You are browsing from: {country}</p>;
-}
+
   return (
     <div className="bg-slate-50 min-h-screen">
 
