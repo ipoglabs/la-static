@@ -29,7 +29,7 @@ export default function Header() {
           />
         </Link>
  {/* ✅ Country Display */}
-        <p className="ml-4 text-sm text-gray-600 hidden sm:block">
+        <p className="ml-4 text-sm text-gray-600">
           🌍 {country}
         </p>
         <div className="flex-1"></div>
