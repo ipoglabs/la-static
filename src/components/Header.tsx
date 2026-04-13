@@ -1,7 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useCountry } from "@/components/country/CountryProvider"
 
 export default function Header() {
+  const country=useCountry()
   return (
     <header className="border-b border-slate-200 shadow-md shadow-gray-300 bg-white">
       
@@ -24,7 +28,10 @@ export default function Header() {
             height={32}
           />
         </Link>
-
+ {/* ✅ Country Display */}
+        <p className="ml-4 text-sm text-gray-600 hidden sm:block">
+          🌍 {country}
+        </p>
         <div className="flex-1"></div>
 
         {/* Right Section */}
