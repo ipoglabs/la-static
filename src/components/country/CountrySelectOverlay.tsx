@@ -1,20 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { Globe } from "lucide-react";
-import { isSupportedCountry } from "@/lib/country-context";
-import { commitCountry } from "@/lib/country-cookie";
 import { COUNTRIES } from "@/lib/data/countries";
 
-export function CountrySelectOverlay() {
-  const router = useRouter();
+interface Props {
+  onSelect: (code: string) => void;
+}
 
-  function handleSelect(code: string) {
-    if (!isSupportedCountry(code)) return;
-    commitCountry(code);
-    router.refresh();
-  }
-
+export function CountrySelectOverlay({ onSelect }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="w-full max-w-sm mx-6 rounded-xl border border-border bg-card p-8 shadow-lg">
@@ -36,7 +29,7 @@ export function CountrySelectOverlay() {
             <button
               key={c.code}
               type="button"
-              onClick={() => handleSelect(c.code)}
+              onClick={() => onSelect(c.code)}
               className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
             >
               <span className="text-xl leading-none">{c.flag}</span>

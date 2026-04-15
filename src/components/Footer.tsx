@@ -3,64 +3,95 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 
-// ─── Shadcn-style Sheet (Bottom Drawer) ──────────────────────────────────────
-function Sheet({
-  open,
-  onClose,
-  title,
-  children,
-}: {
+function Sheet(props: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
 }) {
-  if (!open) return null;
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-50 transition-opacity"
-        onClick={onClose}
-      />
-      {/* Bottom Drawer */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl flex flex-col max-h-[80vh] animate-slide-up">
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-none">
-          <div className="w-10 h-1 rounded-full bg-slate-300" />
-        </div>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 flex-none">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5">
-              <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 text-sm text-slate-600 leading-relaxed space-y-4">
-          {children}
-        </div>
-      </div>
+  const { open, onClose, title, children } = props;
 
-      <style>{`
-        @keyframes slide-up {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-      `}</style>
-    </>
+  const y = useMotionValue(0);
+
+  const FULL = 0;
+  const HALF = 350;
+  const CLOSE = 800;
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+
+          {/* Bottom Sheet */}
+          <motion.div
+            style={{ y }}
+            className="
+              fixed bottom-0 left-0 right-0
+              md:left-1/2 md:-translate-x-1/2
+              z-50 w-full md:max-w-lg
+              bg-white
+              rounded-t-3xl md:rounded-3xl
+              shadow-2xl flex flex-col
+              h-[90vh] md:h-[80vh]
+              md:bottom-10
+            "
+            initial={{ y: CLOSE }}
+            animate={{ y: HALF }}
+            exit={{ y: CLOSE }}
+            transition={{ type: "spring", stiffness: 320, damping: 30 }}
+            drag="y"
+            dragConstraints={{ top: FULL, bottom: CLOSE }}
+            dragElastic={0.15}
+            onDragEnd={() => {
+              const currentY = y.get();
+
+              if (currentY < 150) {
+                y.set(FULL); // expand full
+              } else if (currentY < 550) {
+                y.set(HALF); // stay half
+              } else {
+                onClose(); // close
+              }
+            }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
+              <div className="w-12 h-1.5 rounded-full bg-slate-300" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-800">
+                {title}
+              </h2>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 text-sm text-slate-600 leading-relaxed space-y-4">
+              {children}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
-
 // ─── Sheet Content ────────────────────────────────────────────────────────────
 function PrivacyPolicyContent() {
   return (

@@ -3,9 +3,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCountry } from "@/components/country/CountryProvider"
+import { COUNTRIES } from "@/lib/data/countries"
 
 export default function Header() {
-  const country=useCountry()
+  const { country } = useCountry() // ✅ destructure correctly
+  const found = COUNTRIES.find((c) => c.code === country)
+
   return (
     <header className="border-b border-slate-200 shadow-md shadow-gray-300 bg-white">
       
@@ -28,10 +31,21 @@ export default function Header() {
             height={32}
           />
         </Link>
+<<<<<<< HEAD
  {/* ✅ Country Display */}
         <p className="ml-4 text-sm text-gray-600">
           🌍 {country}
         </p>
+=======
+
+        {/* ✅ Country Display */}
+        {found && (
+          <p className="ml-4 text-sm text-gray-600">
+            {found.flag} {found.name}
+          </p>
+        )}
+
+>>>>>>> 1c51447 ( country detection reset button updated)
         <div className="flex-1"></div>
 
         {/* Right Section */}
@@ -75,7 +89,6 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round"
                   d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
               </svg>
-
               <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
           </button>
