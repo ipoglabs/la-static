@@ -1,8 +1,8 @@
-import type { Metadata, Viewport } from 'next'
-import './globals.css'
+import type { Metadata, Viewport } from "next"
+import "./globals.css"
 
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
+import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 
 import { cookies } from "next/headers"
 import {
@@ -10,20 +10,25 @@ import {
   isSupportedCountry,
 } from "@/lib/country-context"
 import { CountryProvider } from "@/components/country/CountryProvider"
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+import { Inter } from "next/font/google"
+import { cn } from "@/lib/utils"
+
+// ✅ Use Inter instead of Geist
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
 
 export const metadata: Metadata = {
-  title: 'LokalAds',
-  description: 'Find anything with LokalAds',
+  title: "LokalAds",
+  description: "Find anything with LokalAds",
 }
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-  viewportFit: 'cover',
+  viewportFit: "cover",
   userScalable: false,
 }
 
@@ -37,7 +42,7 @@ export default function RootLayout({
   const initialCountry = isSupportedCountry(raw) ? raw : null
 
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
+    <html lang="en" className={cn("font-sans", inter.variable)}>
       <body className="bg-slate-950/10 min-w-[375px]">
         <CountryProvider initialCountry={initialCountry}>
           <Header />
