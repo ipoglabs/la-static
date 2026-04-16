@@ -10,6 +10,10 @@ import {
   isSupportedCountry,
 } from "@/lib/country-context"
 import { CountryProvider } from "@/components/country/CountryProvider"
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: 'LokalAds',
@@ -33,7 +37,7 @@ export default function RootLayout({
   const initialCountry = isSupportedCountry(raw) ? raw : null
 
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className="bg-slate-950/10 min-w-[375px]">
         <CountryProvider initialCountry={initialCountry}>
           <Header />
