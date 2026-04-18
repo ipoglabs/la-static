@@ -3,10 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import ListingPageSkeleton from "@/components/ListingPageSkeleton";
 
 export default function ListingPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-
+ const [isLoading, setIsLoading] = useState(true);
+  if (isLoading) return <ListingPageSkeleton />;
   return (
     <div className="bg-slate-50 min-h-screen">
 
