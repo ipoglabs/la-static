@@ -1,20 +1,31 @@
-// components/ListingPageSkeleton.tsx
-
 function SkeletonBox({ className = "", style = {} }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={`animate-pulse bg-slate-200 rounded ${className}`} style={style} />;
+  return <div className={`animate-pulse bg-slate-300 rounded ${className}`} style={style} />;
 }
 
 export default function ListingPageSkeleton() {
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen flex flex-col">
 
-      {/* SEARCH BAR */}
-      <div className="bg-slate-800 py-2">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-16 flex flex-col sm:flex-row gap-2">
-          <div className="h-[30px] flex-1 rounded-md bg-slate-600 opacity-40 animate-pulse" />
-          <div className="h-[30px] flex-1 rounded-md bg-slate-600 opacity-40 animate-pulse" />
+      {/* HEADER SKELETON */}
+      <div className="bg-white border-b border-slate-200 h-14 flex items-center px-4 sm:px-6 lg:px-16 gap-3">
+        <div className="flex items-center gap-2">
+          <SkeletonBox className="w-8 h-8 rounded-md" />
+          <SkeletonBox className="w-24 h-[18px] rounded-full" />
         </div>
+        <SkeletonBox className="w-16 h-5 rounded-full" />
+        <div className="flex-1" />
+        <SkeletonBox className="w-7 h-7 rounded-full" />
+        <SkeletonBox className="w-20 h-8 rounded-full" />
+        <SkeletonBox className="w-9 h-9 rounded-full" />
       </div>
+
+     {/* SEARCH BAR */}
+<div className="bg-slate-800 py-2">
+  <div className="container mx-auto px-4 sm:px-6 lg:px-16 flex flex-col sm:flex-row gap-2">
+    <div className="h-[30px] flex-1 rounded-md bg-slate-400 opacity-30 animate-pulse" />
+    <div className="h-[30px] flex-1 rounded-md bg-slate-400 opacity-30 animate-pulse" />
+  </div>
+</div>
 
       {/* BREADCRUMB BAR */}
       <div className="bg-slate-50 border-b border-slate-200 py-1">
@@ -30,18 +41,15 @@ export default function ListingPageSkeleton() {
       </div>
 
       {/* MAIN */}
-      <div className="container mx-auto flex flex-row items-start flex-nowrap gap-4 px-4 sm:px-6 lg:px-16 py-4">
+      <div className="container mx-auto flex flex-row items-start flex-nowrap gap-4 px-4 sm:px-6 lg:px-16 py-4 flex-1">
 
         {/* SIDEBAR */}
         <div className="w-64 flex-none bg-white border border-slate-300 rounded-md shadow-sm hidden md:flex flex-col">
-          {/* Header */}
           <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-200">
             <SkeletonBox className="w-5 h-5" />
             <SkeletonBox className="w-16 h-4 rounded-full" />
           </div>
-          {/* Body */}
           <div className="px-4 flex-1">
-            {/* Price Range */}
             <div className="border-b border-slate-200 mt-3 pb-3">
               <SkeletonBox className="w-24 h-3 mb-3 rounded-full" />
               <div className="flex gap-2 items-end">
@@ -50,7 +58,6 @@ export default function ListingPageSkeleton() {
                 <SkeletonBox className="flex-1 h-7 rounded-md" />
               </div>
             </div>
-            {/* Property Type */}
             <div className="border-b border-slate-200 mt-3 pb-3">
               <SkeletonBox className="w-28 h-3 mb-3 rounded-full" />
               <div className="flex flex-wrap gap-2">
@@ -59,7 +66,6 @@ export default function ListingPageSkeleton() {
                 ))}
               </div>
             </div>
-            {/* Bedrooms */}
             <div className="border-b border-slate-200 mt-3 pb-3">
               <SkeletonBox className="w-36 h-3 mb-3 rounded-full" />
               <div className="flex gap-2 items-end">
@@ -68,12 +74,10 @@ export default function ListingPageSkeleton() {
                 <SkeletonBox className="flex-1 h-7 rounded-md" />
               </div>
             </div>
-            {/* Added to site */}
             <div className="border-b border-slate-200 mt-3 pb-3">
               <SkeletonBox className="w-24 h-3 mb-3 rounded-full" />
               <SkeletonBox className="w-full h-7 rounded-md" />
             </div>
-            {/* Must Have */}
             <div className="border-b border-slate-200 mt-3 pb-3">
               <SkeletonBox className="w-20 h-3 mb-3 rounded-full" />
               <div className="flex gap-2">
@@ -82,7 +86,6 @@ export default function ListingPageSkeleton() {
                 ))}
               </div>
             </div>
-            {/* Listed By */}
             <div className="mt-3 pb-3">
               <SkeletonBox className="w-16 h-3 mb-3 rounded-full" />
               <div className="flex gap-2">
@@ -91,7 +94,6 @@ export default function ListingPageSkeleton() {
               </div>
             </div>
           </div>
-          {/* Footer */}
           <div className="px-4 py-3 border-t border-slate-200">
             <SkeletonBox className="w-full h-8 rounded-full" />
           </div>
@@ -99,14 +101,12 @@ export default function ListingPageSkeleton() {
 
         {/* RIGHT */}
         <div className="flex-1 max-sm:w-full">
-          {/* Top bar */}
           <div className="flex items-center gap-2 mb-3">
             <SkeletonBox className="w-9 h-9 rounded-lg md:hidden" />
             <SkeletonBox className="w-24 h-5 rounded-full" />
             <div className="flex-1" />
             <SkeletonBox className="w-28 h-8 rounded-full" />
           </div>
-          {/* Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="bg-white rounded-lg overflow-hidden border border-slate-200">
@@ -135,6 +135,28 @@ export default function ListingPageSkeleton() {
           </div>
         </div>
       </div>
+
+      {/* FOOTER SKELETON */}
+      <div className="bg-slate-800 px-4 sm:px-6 lg:px-16 pt-8 pb-4 mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-6">
+          {[120, 80, 80, 80].map((w, col) => (
+            <div key={col} className="flex flex-col gap-2">
+              <SkeletonBox className="h-3.5 rounded-full mb-1" style={{ width: w, background: '#475569' }} />
+              {[100, 80, 90, 70].map((lw, j) => (
+                <div key={j} className="h-2.5 rounded-full animate-pulse bg-slate-600 opacity-50" style={{ width: lw }} />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-slate-700 pt-4 flex items-center gap-4">
+          <div className="h-2.5 w-32 rounded-full animate-pulse bg-slate-600 opacity-50" />
+          <div className="flex-1" />
+          {[80, 80, 80].map((w, i) => (
+            <div key={i} className="h-2.5 rounded-full animate-pulse bg-slate-600 opacity-50" style={{ width: w }} />
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }

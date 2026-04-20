@@ -191,7 +191,7 @@ export default function Footer() {
               <circle cx="1" cy="1" r="1" />
             </svg>
             <button onClick={() => {
-  setActiveSheet("privacy")
+  setActiveSheet("conditions")
   setLoading(true)
 
   setTimeout(() => {
@@ -204,7 +204,7 @@ export default function Footer() {
               <circle cx="1" cy="1" r="1" />
             </svg>
             <button onClick={() => {
-  setActiveSheet("privacy")
+  setActiveSheet("cookies")
   setLoading(true)
 
   setTimeout(() => {
@@ -251,7 +251,7 @@ export default function Footer() {
               <DialogDescription>{getDescription()}</DialogDescription>
             </DialogHeader>
             <div className="max-h-[70vh] overflow-y-auto">
-              <PolicySkeleton />
+              {loading ? <PolicySkeleton /> : getContent()}
             </div>
           </DialogContent>
         </Dialog>
@@ -264,17 +264,9 @@ export default function Footer() {
               <DrawerDescription>{getDescription()}</DrawerDescription>
             </DrawerHeader>
             <div className="px-4 pb-6 max-h-[80vh] overflow-y-auto">
-              <PolicySkeleton />
+               {loading ? <PolicySkeleton /> : getContent()}
             </div>
-            {/* ✕ close icon button replaces the old text "Close" button */}
-            <DrawerClose asChild>
-              <button
-                className="absolute top-4 right-4 rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </DrawerClose>
+            
           </DrawerContent>
         </Drawer>
       )}

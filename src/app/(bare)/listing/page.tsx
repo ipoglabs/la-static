@@ -2,16 +2,27 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ListingPageSkeleton from "@/components/ListingPageSkeleton";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+
 
 export default function ListingPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
- const [isLoading, setIsLoading] = useState(true);
-  if (isLoading) return <ListingPageSkeleton />;
-  return (
-    <div className="bg-slate-50 min-h-screen">
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) return <ListingPageSkeleton />;
+
+  return (
+    
+    <div className="bg-slate-50 min-h-screen">
+  <Header />
       {/* SEARCH BAR */}
       <div className="bg-slate-800 py-2">
         <form className="container mx-auto px-4 sm:px-6 lg:px-16 flex flex-col sm:flex-row gap-2">
@@ -119,23 +130,21 @@ export default function ListingPage() {
           className="w-64 flex-none bg-white border border-slate-400 rounded-md shadow-md hidden md:flex flex-col sticky top-4 self-start"
           style={{ maxHeight: "calc(100vh - 2rem)" }}
         >
-          {/* Sticky Header */}
           <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-slate-200 flex-none">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-5 text-slate-700">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
             </svg>
             <h2 className="text-lg font-semibold text-slate-700">Filters</h2>
           </div>
-          {/* Scrollable Content */}
           <div className="overflow-y-auto flex-1 px-4">
             <SidebarContent />
           </div>
-          {/* Sticky Footer */}
           <div className="px-4 py-3 border-t border-slate-200 flex-none">
             <button className="w-full bg-slate-700 hover:bg-slate-900 rounded-full text-white text-sm text-center font-medium px-3 pt-1 pb-2">
               Apply
             </button>
           </div>
+          
         </div>
 
         {/* RIGHT */}
@@ -143,8 +152,6 @@ export default function ListingPage() {
 
           {/* TOP BAR */}
           <div className="flex items-center">
-
-            {/* MOBILE FILTER BUTTON */}
             <button
               className="md:hidden flex items-center justify-center w-9 h-9 bg-slate-300 hover:bg-slate-50 rounded-lg mr-2"
               onClick={() => setDrawerOpen(true)}
@@ -216,8 +223,9 @@ export default function ListingPage() {
           </div>
         </div>
       </div>
+        <Footer />
 
-      {/* ===================== MOBILE FILTER PANEL ===================== */}
+      {/* MOBILE FILTER PANEL */}
       {drawerOpen && (
         <>
           <div
@@ -328,6 +336,8 @@ function SidebarContent() {
           <button className="bg-slate-200 hover:bg-slate-300 text-slate-800 border border-slate-300 text-xs px-3 py-1 rounded-full font-medium">Agent</button>
         </div>
       </div>
+    
     </>
+    
   );
 }
