@@ -18,12 +18,11 @@ export default function ListingPageSkeleton() {
         <SkeletonBox className="w-20 h-8 rounded-full" />
         <SkeletonBox className="w-9 h-9 rounded-full" />
       </div>
-
-     {/* SEARCH BAR */}
+{/* SEARCH BAR */}
 <div className="bg-slate-800 py-2">
   <div className="container mx-auto px-4 sm:px-6 lg:px-16 flex flex-col sm:flex-row gap-2">
-    <div className="h-[30px] flex-1 rounded-md bg-slate-400 opacity-30 animate-pulse" />
-    <div className="h-[30px] flex-1 rounded-md bg-slate-400 opacity-30 animate-pulse" />
+    <div className="animate-pulse h-[30px] w-full rounded bg-slate-600" />
+    <div className="animate-pulse h-[30px] w-full rounded bg-slate-600" />
   </div>
 </div>
 

@@ -9,6 +9,10 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
 import PolicySkeleton from "@/components/footer/PolicySkeleton"
 
+import { useCountry } from "@/components/country/CountryProvider";
+import { COUNTRIES } from "@/lib/data/countries";
+
+
 import {
   Dialog,
   DialogContent,
@@ -37,6 +41,9 @@ export default function Footer() {
   const [loading, setLoading] = useState(false)
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
+// inside your component:
+const { country } = useCountry();
+const found = COUNTRIES.find((c) => c.code === country);
   const getTitle = () => {
     if (activeSheet === "privacy") return "Privacy Policy";
     if (activeSheet === "conditions") return "Terms & Conditions";
@@ -67,14 +74,17 @@ export default function Footer() {
 
           {/* Summary: Company Info & Toggle */}
           <summary className="cursor-pointer flex flex-col items-stretch justify-center">
-            <div className="flex items-center justify-between">
-              <Link className="flex gap-2 items-center" href="/">
-                <Image className="size-11" src="/assets/la-logo-symbol-black.svg" alt="logo" width={44} height={44} />
-                <div className="relative">
-                  <Image className="w-24" src="/assets/la-text-white.svg" alt="logo" width={96} height={32} />
-                  <span className="absolute right-1 -bottom-4 text-[11px] font-semibold text-white">India</span>
-                </div>
-              </Link>
+           <div className="flex items-center justify-between">
+  <Link className="flex gap-2 items-center" href="/">
+    <Image className="size-11" src="/assets/la-logo-symbol-black.svg" alt="logo" width={44} height={44} />
+    <div className="relative">
+      <Image className="w-24" src="/assets/la-text-white.svg" alt="logo" width={96} height={32} />
+      <span className="absolute right-1 -bottom-4 text-[11px] font-semibold text-white">
+        {found?.name || country}
+      </span>
+    </div>
+  </Link>
+            
 
               {/* Plus / Minus toggle */}
               <div className="size-10 flex items-center justify-center text-white bg-slate-800 hover:bg-slate-600">
