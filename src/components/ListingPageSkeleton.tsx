@@ -10,9 +10,9 @@ export default function ListingPageSkeleton() {
       <div className="bg-white border-b border-slate-200 h-14 flex items-center px-4 sm:px-6 lg:px-16 gap-3">
         <div className="flex items-center gap-2">
           <SkeletonBox className="w-8 h-8 rounded-md" />
-          <SkeletonBox className="w-24 h-[18px] rounded-full" />
+          
         </div>
-        <SkeletonBox className="w-16 h-5 rounded-full" />
+     
         <div className="flex-1" />
         <SkeletonBox className="w-7 h-7 rounded-full" />
         <SkeletonBox className="w-20 h-8 rounded-full" />

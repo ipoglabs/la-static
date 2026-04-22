@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCountry } from "@/components/country/CountryProvider";
-import { COUNTRIES } from "@/lib/data/countries";
 
 export default function Header() {
-  const { country } = useCountry();
-  const found = COUNTRIES.find((c) => c.code === country);
+ 
 
   return (
     <header className="border-b border-slate-200 shadow-md shadow-gray-300 bg-white w-full">
@@ -31,11 +28,7 @@ export default function Header() {
           />
         </Link>
 
-        {/* Country Display */}
-        <p className="ml-4 text-sm text-gray-600">
-          🌍 {found?.name || country}
-        </p>
-
+        
         <div className="flex-1" />
 
         {/* Right Section */}

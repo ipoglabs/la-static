@@ -41,7 +41,7 @@ const categories = [
   {
     title: 'For Sale',
     desc: 'Great deals on electronics, furniture, and more.',
-    icon: '/assets/icons/for_sale.png',
+    icon: '/assets/icons/forsale.png',
     bg: 'bg-yellow-100',
     items: ['Electronics','Home & Furniture','Office Supplies','Fashion & Accessories','Sports & Fitness','Toys & Games','Book, Music & Media','Baby & Kids','Health & Beauty','Garden & Outdoors','Hobbies & Collections','Miscellaneous'],
   },
@@ -95,28 +95,30 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-6 columns-1 sm:columns-2 md:columns-3 gap-x-5 max-w-screen-lg">
         {categories.map((cat) => (
           <details key={cat.title} className="break-inside-avoid group cursor-pointer mb-4">
-           <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-4 pt-4 pb-4 min-h-[110px] flex flex-col justify-between border border-slate-300 shadow-sm`}>
+         <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-4 pt-3 pb-3 min-h-[50px] flex items-center border border-slate-300 shadow-sm`}>
 
-  {/* 3D Icon — top right */}
-  <Image
-    src={cat.icon}
-    alt={cat.title}
-    width={60}
-    height={60}
-    className="absolute top-2 right-2 size-16 object-contain"
-  />
+          {/* 3D Icon — left side */}
+          <Image
+          src={cat.icon}
+          alt={cat.title}
+          width={72}
+          height={72}
+          className="flex-none mr-3 relative z-10 size-20 object-contain"
+          />
 
-  {/* Title & desc — left */}
-  <div className="relative z-10 pr-16">
-    <h2 className="text-lg font-bold text-slate-700">{cat.title}</h2>
-    <p className="text-sm text-slate-600">{cat.desc}</p>
-  </div>
+          {/* Title & desc — middle, grows */}
+           <div className="relative z-10 flex-1 pr-10">
+            <h2 className="text-lg font-bold text-slate-700">{cat.title}</h2>
+             <p className="text-sm text-slate-600">{cat.desc}</p>
+           </div>
 
-  <div className="flex-none relative z-10 self-start mt-2">
-    <ChevronDownIcon />
-    <ChevronUpIcon />
-  </div>
-</summary>
+          {/* Chevron — right corner */}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+          <ChevronDownIcon />
+          <ChevronUpIcon />
+          </div>
+
+        </summary>
 
             <ul className="bg-white rounded-lg border border-slate-400 divide-y divide-dashed divide-slate-300 p-1 group-open:rounded-t-none -mt-1">
               {cat.items.map((item) => (
