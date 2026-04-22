@@ -39,8 +39,7 @@ export default function Footer() {
     "privacy" | "conditions" | "cookies" | null
   >(null);
   const [loading, setLoading] = useState(false)
-  const isDesktop = useMediaQuery("(min-width: 768px)");
-
+  const isDesktop = useMediaQuery("(min-width: 768px)")
 // inside your component:
 const { country } = useCountry();
 const found = COUNTRIES.find((c) => c.code === country);
@@ -67,7 +66,7 @@ const found = COUNTRIES.find((c) => c.code === country);
 
   return (
     <>
-      <footer className="bg-slate-800 border-t-4 border-rose-500">
+      <footer className="bg-slate-800 border-t-4 border-rose-500 w-full">
 
         {/* Company Info & Collapsable Footer */}
         <details className="group container mx-auto flex max-sm:flex-col flex-row flex-nowrap gap-2 px-4 py-4 max-w-screen-lg">

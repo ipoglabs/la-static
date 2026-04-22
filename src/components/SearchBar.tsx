@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function SearchBar() {
   return (
-    <div className="bg-slate-800 pt-4 pb-1 shadow-gray-200 shadow-lg">
+    <div className="bg-slate-800 pt-4 pb-1 shadow-gray-200 shadow-lg w-full">
 
       {/* TITLE */}
       <div className="container max-w-screen-sm mx-auto px-4 text-center pb-4">
@@ -15,10 +15,10 @@ export default function SearchBar() {
       </div>
 
       {/* SEARCH FORM */}
-      <form className="container mx-auto px-4 flex flex-col sm:flex-row gap-2 max-w-screen-lg">
+      <form className="container mx-auto px-4 flex flex-col gap-2 max-w-screen-lg">
 
         {/* 🔍 KEYWORD */}
-        <div className="relative flex-1">
+        <div className="relative w-full">
 
           {/* ICON */}
           <svg
@@ -50,10 +50,10 @@ export default function SearchBar() {
         </div>
 
         {/* 📍 LOCATION */}
-        <div className="flex flex-1">
+        <div className="flex w-full">
 
           {/* INPUT */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
 
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,10 @@ export default function SearchBar() {
           </div>
 
           {/* RADIUS */}
-          <button className="flex items-center bg-slate-200 border-l px-4 rounded-r-md text-sm">
+          <button
+            type="button"
+            className="flex items-center bg-slate-200 border-l px-4 rounded-r-md text-sm whitespace-nowrap flex-shrink-0"
+          >
             + 0 miles
             <svg
               className="size-4 ml-1 text-slate-500"

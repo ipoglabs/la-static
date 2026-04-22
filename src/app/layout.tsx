@@ -29,8 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const initialCountry = isSupportedCountry(raw) ? raw : null
 
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)}>
-      <body className="bg-slate-950/10 min-w-[375px]">
+    <html lang="en" className={cn("font-sans w-full", inter.variable)}>
+      <body className="bg-slate-950/10 min-w-[375px] w-full min-h-screen overflow-x-hidden">
         <CountryProvider initialCountry={initialCountry}>
           {children}
         </CountryProvider>

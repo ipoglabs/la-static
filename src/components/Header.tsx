@@ -10,7 +10,7 @@ export default function Header() {
   const found = COUNTRIES.find((c) => c.code === country);
 
   return (
-    <header className="border-b border-slate-200 shadow-md shadow-gray-300 bg-white">
+    <header className="border-b border-slate-200 shadow-md shadow-gray-300 bg-white w-full">
       <div className="container mx-auto h-16 flex items-center px-4 max-w-screen-lg">
         
         {/* Logo */}

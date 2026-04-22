@@ -27,17 +27,17 @@ export default function ListingPageSkeleton() {
 </div>
 
       {/* BREADCRUMB BAR */}
-      <div className="bg-slate-50 border-b border-slate-200 py-1">
-        <div className="container mx-auto h-8 flex items-center px-4 sm:px-6 lg:px-16 gap-2">
-          <SkeletonBox className="w-5 h-5 rounded-full" />
-          <SkeletonBox className="w-3 h-3 rounded-full" />
-          <SkeletonBox className="w-24 h-3 rounded-full" />
-          <SkeletonBox className="w-3 h-3 rounded-full" />
-          <SkeletonBox className="w-20 h-3 rounded-full" />
-          <div className="flex-1" />
-          <SkeletonBox className="w-24 h-3 rounded-full" />
-        </div>
-      </div>
+<div className="bg-slate-50 border-b border-slate-200 py-1">
+  <div className="container mx-auto h-8 flex items-center px-4 sm:px-6 lg:px-16 gap-2">
+    <SkeletonBox className="w-5 h-5 rounded-full" />
+    <SkeletonBox className="w-3 h-3 rounded-full" />
+    <SkeletonBox className="w-24 h-3 rounded-full" />
+    <div className="flex-1" />
+    <SkeletonBox className="w-7 h-7 rounded-full" />
+     <SkeletonBox className="w-24 h-3 rounded-full" />
+    
+  </div>
+</div>
 
       {/* MAIN */}
       <div className="container mx-auto flex flex-row items-start flex-nowrap gap-4 px-4 sm:px-6 lg:px-16 py-4 flex-1">
