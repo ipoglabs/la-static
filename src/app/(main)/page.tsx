@@ -103,7 +103,7 @@ export default function HomePage() {
           alt={cat.title}
           width={72}
           height={72}
-          className="flex-none mr-3 relative z-10 size-20 object-contain"
+          className="flex-none mr-3 relative z-10 size-20 object-contain border border-red-500"
           />
 
           {/* Title & desc — middle, grows */}
