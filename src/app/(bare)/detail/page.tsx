@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
+import PostDetailsPageSkeleton from "@/components/DetailPageSkeleton";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 /* ─────────────────────────────────────────────
    Small reusable SVG helpers
 ───────────────────────────────────────────── */
@@ -31,11 +33,6 @@ const BadgeCheckIcon = () => (
   </svg>
 );
 
-/* ─────────────────────────────────────────────
-   Section card — no side borders on mobile,
-   full border + rounded + shadow from sm up.
-   Matches HTML: border-y sm:rounded-md sm:border sm:shadow-md
-───────────────────────────────────────────── */
 const sectionCls =
   "bg-white px-4 py-5 border-y border-slate-900/25 sm:rounded-md sm:border sm:shadow-black/10 sm:shadow-md";
 
@@ -117,6 +114,22 @@ function KeyDetailsTable({ title, rows }: { title: string; rows: [string, string
    Main Page
 ───────────────────────────────────────────── */
 export default function PostDetailsPage() {
+  // ─── 1. Loading state declared at the top of the component ───
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ─── 2. Timer to simulate data fetch — swap setTimeout for your
+  //        real data-fetching logic (e.g. resolve when SWR/React Query
+  //        returns data) and call setIsLoading(false) when done ───
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2400);
+    return () => clearTimeout(timer); // cleanup on unmount
+  }, []);
+
+  // ─── 3. Early return: render skeleton until data is ready ───
+  if (isLoading) return <PostDetailsPageSkeleton />;
+
+  // ─── 4. Real page rendered once loading is false ───
+
   const keyDetails1: [string, string][] = [
     ["Key 1", "Value 1"],
     ["Key 2", "Value 2"],
@@ -133,11 +146,11 @@ export default function PostDetailsPage() {
 
   return (
     <div className="bg-slate-950/15 min-w-[375px]">
-
+<Header />
       {/* ── MAIN BODY ── */}
       <div className="max-w-screen-2xl mx-auto sm:px-6 md:px-12 lg:px-20 xl:px-28 flex flex-col gap-y-2 items-stretch flex-nowrap">
 
-        {/* Breadcrumb — flush on mobile, rounded bottom on sm+ */}
+        {/* Breadcrumb */}
         <div className="bg-slate-800 sm:rounded-b-md">
           <div className="px-4 sm:px-6 h-9 flex items-center">
             <ul className="flex items-center">
@@ -173,7 +186,7 @@ export default function PostDetailsPage() {
           </div>
         </div>
 
-        {/* Title — flush on mobile, rounded bottom + side borders on sm+ */}
+        {/* Title */}
         <div className="flex flex-col items-stretch bg-white px-4 py-4 border-b border-slate-900/25 sm:rounded-b-md sm:border-x sm:border-b sm:shadow-md sm:shadow-black/10">
           <h2 className="font-semibold text-xl text-gray-800">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.
@@ -205,7 +218,6 @@ export default function PostDetailsPage() {
             {/* Gallery */}
             <section className="bg-white px-4 py-5 flex flex-col items-stretch gap-3 border-y border-slate-900/25 sm:rounded-md sm:border sm:shadow-black/10 sm:shadow-md">
               <div className="flex flex-col gap-1">
-                {/* Main image — full width, no rounded on mobile */}
                 <div className="bg-slate-400 h-48 w-full" />
                 <div className="flex flex-row gap-1">
                   {[...Array(6)].map((_, i) => (
@@ -274,7 +286,7 @@ export default function PostDetailsPage() {
               </div>
             </section>
 
-            {/* CTA — mobile only. -mt-4 z-10 overlaps the seller section bottom */}
+            {/* CTA — mobile only */}
             <section className="md:hidden bg-slate-700 p-3 sm:rounded-b-md sm:shadow-black/10 sm:shadow-md flex flex-row flex-nowrap items-center gap-3 -mt-4 z-10">
               <button className="flex-1 bg-blue-500 rounded-lg h-11 text-white font-semibold">
                 <div className="flex gap-3 justify-center items-center">
@@ -479,7 +491,7 @@ export default function PostDetailsPage() {
           </div>{/* end right col */}
         </div>
       </div>
-
+<Footer />
     </div>
   );
 }
