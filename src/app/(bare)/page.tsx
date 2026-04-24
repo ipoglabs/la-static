@@ -1,69 +1,75 @@
+
+'use client'
 import Link from 'next/link'
 import Image from 'next/image'
 import SearchBar from '@/components/SearchBar'
+import { useState, useEffect } from 'react'
+import HomePageSkeleton from '@/components/HomePageSkeleton'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 const categories = [
   {
     title: 'Property',
     desc: 'Find your perfect home, rental or commercial space.',
     icon: '/assets/icons/property.png',
-    bg: 'bg-amber-100',
+    bg: 'bg-white',
     items: ['To Rent','To Buy','Room Rental','For Students','Commercial','Holiday Rental','Land for Sale/Lease','Wanted List'],
   },
   {
     title: 'Jobs',
     desc: 'Discover full-time, part-time, and freelance opportunities.',
     icon: '/assets/icons/jobs.png',
-    bg: 'bg-teal-100',
+    bg: 'bg-white',
     items: ['Full Time','Part Time','Freelance','Internship','Temporary & Seasonal','Wanted'],
   },
   {
     title: 'Vehicles',
     desc: 'Buy, Sell, or rent cars, bikes and more.',
     icon: '/assets/icons/vehicles.png',
-    bg: 'bg-slate-200',
+    bg: 'bg-white',
     items: ['Car','Motorcycle','Van','Truck','Parts & Accessories'],
   },
   {
     title: 'Services',
     desc: 'Skilled professionals for every need.',
     icon: '/assets/icons/services.png',
-    bg: 'bg-orange-100',
+    bg: 'bg-white',
     items: ['Home Services','Business Services','Health & Fitness','Tutoring','Education & Learning','Travel & Tourism','Food & Dining','Technology & Gadgets','Other Services'],
   },
   {
     title: 'Pets',
     desc: 'Adopt, buy or find pet services near you.',
     icon: '/assets/icons/pets.png',
-    bg: 'bg-pink-100',
+    bg: 'bg-white',
     items: ['For Sale','Adoption','Service','Accessories','Lost & Found'],
   },
   {
     title: 'For Sale',
     desc: 'Great deals on electronics, furniture, and more.',
     icon: '/assets/icons/forsale.png',
-    bg: 'bg-yellow-100',
+    bg: 'bg-white',
     items: ['Electronics','Home & Furniture','Office Supplies','Fashion & Accessories','Sports & Fitness','Toys & Games','Book, Music & Media','Baby & Kids','Health & Beauty','Garden & Outdoors','Hobbies & Collections','Miscellaneous'],
   },
   {
     title: 'Business',
     desc: 'Promote, buy or sell businesses and franchises.',
     icon: '/assets/icons/industry.png',
-    bg: 'bg-stone-200',
+    bg: 'bg-white',
     items: ['Business for Sale/Lease','B2B Service','Freelance / Contractors','Partnership Opportunities','Equipment and Supplies','Start-up Support','Training Opportunities','Franchise Opportunities','Business Events','Financial Services','Miscellaneous'],
   },
   {
     title: 'Community & Events',
     desc: 'Connect through local events and activities.',
     icon: '/assets/icons/community.png',
-    bg: 'bg-cyan-100',
+    bg: 'bg-white',
     items: ['Lost & Found','Events','Classes','Volunteering & Charity','Classes & Courses','Announcement','Child & Family Activities','General / Other'],
   },
   {
     title: 'Special Offers',
     desc: 'Exclusive deals, discounts, and limited-time offers.',
     icon: '/assets/icons/special_offer.png',
-    bg: 'bg-rose-100',
+    bg: 'bg-white',
     items: ['Banking & Financial Deals','Travel & Tourism','Retail & Shopping','Food & Dining','Electronics & Gadgets','Health & Wellness','Education & Learning','Holiday & Seasonal Offers','Entertainment','Home & Living','Automotive','Miscellaneous'],
   },
 ]
@@ -73,69 +79,86 @@ const ChevronRightIcon = () => (
     <path fillRule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
   </svg>
 )
-
 const ChevronDownIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="inline-block size-5 group-open:hidden">
-    <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
-  </svg>
+  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 group-open:hidden">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 text-slate-500">
+      <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
+    </svg>
+  </div>
 )
 
 const ChevronUpIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="hidden size-5 group-open:inline-block">
-    <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
-  </svg>
+  <div className="hidden items-center justify-center w-9 h-9 rounded-full bg-slate-100 group-open:flex">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 text-slate-500">
+      <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
+    </svg>
+  </div>
 )
-
 export default function HomePage() {
+  // ─── 1. Loading state declared at the top of the component ───
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ─── 2. Timer to simulate data fetch — swap setTimeout for your
+  //        real data-fetching logic (e.g. resolve when SWR/React Query
+  //        returns data) and call setIsLoading(false) when done ───
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 4800);
+    return () => clearTimeout(timer); // cleanup on unmount
+  }, []);
+
+  // ─── 3. Early return: render skeleton until data is ready ───
+  if (isLoading) return <HomePageSkeleton />;
+
+
   return (
     <div className="bg-slate-950/15">
+      <Header />
       <SearchBar />
+{/* Category Grid */}
+<div className="container mx-auto px-2 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
+  {categories.map((cat) => (
+    <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
+      <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-2 pt-3 pb-3 min-h-[50px] flex items-center border border-slate-300 shadow-sm`}>
 
-      {/* Category Grid */}
-      <div className="container mx-auto px-4 py-6 columns-1 sm:columns-2 md:columns-3 gap-x-5 max-w-screen-lg">
-        {categories.map((cat) => (
-          <details key={cat.title} className="break-inside-avoid group cursor-pointer mb-4">
-         <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-4 pt-3 pb-3 min-h-[50px] flex items-center border border-slate-300 shadow-sm`}>
-
-          {/* 3D Icon — left side */}
-          <Image
+        {/* 3D Icon — left side */}
+        <Image
           src={cat.icon}
           alt={cat.title}
           width={72}
           height={72}
-          className="flex-none mr-3 relative z-10 size-20 object-contain border border-red-500"
-          />
+          className="flex-none mr-2 relative z-10 size-20 object-contain  border border-red-300"
+        />
 
-          {/* Title & desc — middle, grows */}
-           <div className="relative z-10 flex-1 pr-10">
-            <h2 className="text-lg font-bold text-slate-700">{cat.title}</h2>
-             <p className="text-sm text-slate-600">{cat.desc}</p>
-           </div>
+        {/* Title & desc — middle, grows */}
+        <div className="relative z-10 flex-1 pr-10">
+          <h2 className="text-xl font-bold text-slate-700">{cat.title}</h2>
+          <p className="text-base text-slate-600">{cat.desc}</p>
+        </div>
 
-          {/* Chevron — right corner */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+        {/* Chevron — right corner */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
           <ChevronDownIcon />
           <ChevronUpIcon />
-          </div>
+        </div>
 
-        </summary>
+      </summary>
 
-            <ul className="bg-white rounded-lg border border-slate-400 divide-y divide-dashed divide-slate-300 p-1 group-open:rounded-t-none -mt-1">
-              {cat.items.map((item) => (
-                <li key={item}>
-                  <Link
-                    href="/listing"
-                    className="flex items-center justify-between pl-5 pr-2 py-1 text-slate-900 hover:font-semibold hover:text-emerald-800 hover:bg-emerald-100 rounded-md"
-                  >
-                    <span>{item}</span>
-                    <ChevronRightIcon />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </details>
+      <ul className="bg-white rounded-lg border border-slate-400 divide-y divide-dashed divide-slate-300 p-1 group-open:rounded-t-none -mt-1">
+        {cat.items.map((item) => (
+          <li key={item}>
+            <Link
+              href="/listing"
+              className="flex items-center justify-between pl-5 pr-2 py-1 text-slate-900 hover:font-semibold hover:text-emerald-800 hover:bg-emerald-100 rounded-md"
+            >
+              <span>{item}</span>
+              <ChevronRightIcon />
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
+    </details>
+  ))}
+</div>
 
       {/* Stats Section */}
       <div className="bg-slate-300 py-5 border-2 border-t border-slate-400">
@@ -175,7 +198,7 @@ export default function HomePage() {
 
         </div>
       </div>
-
+<Footer />
     </div>
   )
 }

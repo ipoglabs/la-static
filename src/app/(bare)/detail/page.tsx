@@ -121,7 +121,7 @@ export default function PostDetailsPage() {
   //        real data-fetching logic (e.g. resolve when SWR/React Query
   //        returns data) and call setIsLoading(false) when done ───
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2400);
+    const timer = setTimeout(() => setIsLoading(false), 4800);
     return () => clearTimeout(timer); // cleanup on unmount
   }, []);
 

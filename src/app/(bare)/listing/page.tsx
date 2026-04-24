@@ -13,7 +13,7 @@ export default function ListingPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2400);
+    const timer = setTimeout(() => setIsLoading(false), 4800);
     return () => clearTimeout(timer);
   }, []);
 
