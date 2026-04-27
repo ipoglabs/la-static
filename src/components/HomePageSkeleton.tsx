@@ -67,6 +67,20 @@ export default function HomePageSkeleton() {
         </div>
       </div>
 
+      {/* FOOTER SKELETON */}
+      <div className="bg-slate-800 px-4 sm:px-6 lg:px-16 pt-8 pb-4 mt-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-6">
+          {[120, 80, 80, 80].map((w, col) => (
+            <div key={col} className="flex flex-col gap-2">
+              <SkeletonBox className="h-3.5 rounded-full mb-1" style={{ width: w, background: '#475569' }} />
+              {[100, 80, 90, 70].map((lw, j) => (
+                <div key={j} className="h-2.5 rounded-full animate-pulse bg-slate-600 opacity-50" style={{ width: lw }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }

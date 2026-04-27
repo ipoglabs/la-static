@@ -13,63 +13,63 @@ const categories = [
     title: 'Property',
     desc: 'Find your perfect home, rental or commercial space.',
     icon: '/assets/icons/property.png',
-    bg: 'bg-white',
+    bg: 'bg-amber-100',
     items: ['To Rent','To Buy','Room Rental','For Students','Commercial','Holiday Rental','Land for Sale/Lease','Wanted List'],
   },
   {
     title: 'Jobs',
     desc: 'Discover full-time, part-time, and freelance opportunities.',
     icon: '/assets/icons/jobs.png',
-    bg: 'bg-white',
+    bg: 'bg-teal-100',
     items: ['Full Time','Part Time','Freelance','Internship','Temporary & Seasonal','Wanted'],
   },
   {
     title: 'Vehicles',
     desc: 'Buy, Sell, or rent cars, bikes and more.',
     icon: '/assets/icons/vehicles.png',
-    bg: 'bg-white',
+    bg: 'bg-slate-200',
     items: ['Car','Motorcycle','Van','Truck','Parts & Accessories'],
   },
   {
     title: 'Services',
     desc: 'Skilled professionals for every need.',
     icon: '/assets/icons/services.png',
-    bg: 'bg-white',
+    bg: 'bg-orange-100',
     items: ['Home Services','Business Services','Health & Fitness','Tutoring','Education & Learning','Travel & Tourism','Food & Dining','Technology & Gadgets','Other Services'],
   },
   {
     title: 'Pets',
     desc: 'Adopt, buy or find pet services near you.',
     icon: '/assets/icons/pets.png',
-    bg: 'bg-white',
+    bg: 'bg-pink-100',
     items: ['For Sale','Adoption','Service','Accessories','Lost & Found'],
   },
   {
     title: 'For Sale',
     desc: 'Great deals on electronics, furniture, and more.',
     icon: '/assets/icons/forsale.png',
-    bg: 'bg-white',
+    bg: 'bg-yellow-100',
     items: ['Electronics','Home & Furniture','Office Supplies','Fashion & Accessories','Sports & Fitness','Toys & Games','Book, Music & Media','Baby & Kids','Health & Beauty','Garden & Outdoors','Hobbies & Collections','Miscellaneous'],
   },
   {
     title: 'Business',
     desc: 'Promote, buy or sell businesses and franchises.',
     icon: '/assets/icons/industry.png',
-    bg: 'bg-white',
+    bg: 'bg-stone-200',
     items: ['Business for Sale/Lease','B2B Service','Freelance / Contractors','Partnership Opportunities','Equipment and Supplies','Start-up Support','Training Opportunities','Franchise Opportunities','Business Events','Financial Services','Miscellaneous'],
   },
   {
     title: 'Community & Events',
     desc: 'Connect through local events and activities.',
     icon: '/assets/icons/community.png',
-    bg: 'bg-white',
+    bg: 'bg-cyan-100',
     items: ['Lost & Found','Events','Classes','Volunteering & Charity','Classes & Courses','Announcement','Child & Family Activities','General / Other'],
   },
   {
     title: 'Special Offers',
     desc: 'Exclusive deals, discounts, and limited-time offers.',
     icon: '/assets/icons/special_offer.png',
-    bg: 'bg-white',
+    bg: 'bg-rose-100',
     items: ['Banking & Financial Deals','Travel & Tourism','Retail & Shopping','Food & Dining','Electronics & Gadgets','Health & Wellness','Education & Learning','Holiday & Seasonal Offers','Entertainment','Home & Living','Automotive','Miscellaneous'],
   },
 ]
@@ -111,23 +111,22 @@ export default function HomePage() {
 
 
   return (
-    <div className="bg-slate-950/15">
+    <div className="bg-white">
       <Header />
       <SearchBar />
 {/* Category Grid */}
-<div className="container mx-auto px-2 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
+<div className="container mx-auto px-2 py-3 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
   {categories.map((cat) => (
     <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
-      <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-2 pt-3 pb-3 min-h-[50px] flex items-center border border-slate-300 shadow-sm`}>
+      <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-0 py-1.5 flex items-center border border-slate-200 shadow-[0_4px_20px_rgba(0,0,0,0.08)]`}>
 
-        {/* 3D Icon — left side */}
-        <Image
-          src={cat.icon}
-          alt={cat.title}
-          width={72}
-          height={72}
-          className="flex-none mr-2 relative z-10 size-20 object-contain  border border-red-300"
-        />
+  <Image
+    src={cat.icon}
+    alt={cat.title}
+    width={56}
+    height={56}
+    className="flex-none mr-2 size-14 object-contain border border-red-300"
+  />
 
         {/* Title & desc — middle, grows */}
         <div className="relative z-10 flex-1 pr-10">
