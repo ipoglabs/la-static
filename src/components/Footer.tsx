@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { X } from "lucide-react";
-import ConfettiButton from "./confettibutton";
+
 
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,7 @@ const found = COUNTRIES.find((c) => c.code === country);
             <p className="text-slate-300 text-sm font-normal mt-2">
               find anything with lokalads, its just secure..
             </p>
-            <ConfettiButton />
+            
           </summary>
 
           {/* Collapsable Links */}
