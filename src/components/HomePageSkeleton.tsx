@@ -2,7 +2,7 @@ function SkeletonBox({ className = "", style = {} }: { className?: string; style
   return <div className={`animate-pulse bg-slate-300 rounded ${className}`} style={style} />;
 }
 
-function SkeletonLogoSVG({ size = 32 }: { size?: number }) {
+function SkeletonLogoSVG({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 712 712" fill="none" xmlns="http://www.w3.org/2000/svg" className="animate-pulse">
       <path d="M0 173C0 77.4547 77.4547 0 173 0H539C634.545 0 712 77.4547 712 173V539C712 634.545 634.545 712 539 712H173C77.4547 712 0 634.545 0 539V173Z" fill="#cbd5e1"/>
