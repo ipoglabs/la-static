@@ -129,7 +129,7 @@ export default function HomePage() {
   />
 
         {/* Title & desc — middle, grows */}
-        <div className="relative z-10 flex-1 pr-10 py-4">
+        <div className="relative z-10 flex-1 pr-10 py-3">
           <h2 className="text-xl font-bold text-slate-700">{cat.title}</h2>
           <p className="text-base text-slate-600">{cat.desc}</p>
         </div>
