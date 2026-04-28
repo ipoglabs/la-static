@@ -118,14 +118,14 @@ export default function HomePage() {
 <div className="container mx-auto px-2 py-3 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
   {categories.map((cat) => (
     <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
-      <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-0 py-1.5 flex items-center border border-slate-200 shadow-[0_4px_20px_rgba(0,0,0,0.08)]`}>
+      <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-0 py-0 flex items-center border border-slate-200 shadow-[0_4px_30px_rgba(0,0,0,0.12)]`}>
 
   <Image
     src={cat.icon}
     alt={cat.title}
-    width={56}
-    height={56}
-    className="flex-none mr-2 size-14 object-contain border border-red-300"
+    width={100}
+    height={100}
+    className="flex-none mr-2 size-20 object-contain border border-red-300"
   />
 
         {/* Title & desc — middle, grows */}
