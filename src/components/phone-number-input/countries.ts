@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import {
   FlagUS,
   FlagSG,
@@ -55,7 +55,7 @@ export type Country = {
   code: string; // ISO2
   name: string;
   dial: string; // without +
-  Flag: React.FC<React.SVGProps<SVGSVGElement>>;
+  Flag: React.FC<React.ImgHTMLAttributes<HTMLImageElement>>;
 };
 
 export const COUNTRIES: Country[] = [
@@ -107,6 +107,6 @@ export const COUNTRIES: Country[] = [
   { code: "CO", name: "Colombia", dial: "57", Flag: FlagCO },
   { code: "PE", name: "Peru", dial: "51", Flag: FlagPE },
   { code: "VE", name: "Venezuela", dial: "58", Flag: FlagVE },
-] ;
+];
 
 export default COUNTRIES;
