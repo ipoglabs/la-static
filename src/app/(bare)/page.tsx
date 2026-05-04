@@ -10,7 +10,7 @@ import Footer from '@/components/Footer'
 
 const categories = [
   {
-    title: 'Property',
+    title: 'Property 1',
     desc: 'Find your perfect home, rental or commercial space.',
     icon: '/assets/icons/property.png',
     bg: 'bg-amber-100',
@@ -111,36 +111,48 @@ export default function HomePage() {
 
 
   return (
-    <div className="bg-white">
+    <div className="bg-slate-300">
       <Header />
       <SearchBar />
 {/* Category Grid */}
-<div className="container mx-auto px-2 py-3 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
+<div className="container mx-auto px-0 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
   {categories.map((cat) => (
     <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
-      <summary className={`cursor-pointer list-none relative overflow-hidden rounded-lg group-open:rounded-b-none ${cat.bg} px-0 py-0 flex items-center border border-slate-200 shadow-[0_4px_30px_rgba(0,0,0,0.12)]`}>
-
+<summary
+  className={`
+    cursor-pointer list-none relative
+    flex items-center justify-between
+    rounded-2xl group-open:rounded-b-none
+    px-4 py-4
+    ${cat.bg}
+    border border-slate-300
+    shadow-[0_6px_16px_rgba(0,0,0,0.08)]
+    transition active:scale-[0.98]
+  `}
+>
   <Image
     src={cat.icon}
     alt={cat.title}
     width={100}
     height={100}
-    className="flex-none mr-2 size-21 object-contain border border-red-300"
+    className="flex-none mr-3 w-14 h-14 object-contain"
   />
 
-        {/* Title & desc — middle, grows */}
-        <div className="relative z-10 flex-1 pr-10 py-3">
-          <h2 className="text-xl font-bold text-slate-700">{cat.title}</h2>
-          <p className="text-base text-slate-600">{cat.desc}</p>
-        </div>
+  {/* Title & desc */}
+  <div className="relative z-10 flex-1 pr-10">
+    <h2 className="text-xl font-bold text-slate-700">
+      {cat.title}
+    </h2>
+    <p className="text-base text-slate-700">
+      {cat.desc}
+    </p>
+  </div>
 
-        {/* Chevron — right corner */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
-          <ChevronDownIcon />
-          <ChevronUpIcon />
-        </div>
-
-      </summary>
+  {/* Chevron */}
+  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+    <ChevronDownIcon />
+  </div>
+</summary>
 
       <ul className="bg-white rounded-lg border border-slate-400 divide-y divide-dashed divide-slate-300 p-1 group-open:rounded-t-none -mt-1">
         {cat.items.map((item) => (

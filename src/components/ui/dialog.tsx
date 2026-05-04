@@ -4,7 +4,8 @@ import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { XIcon } from "lucide-react"
 
 function Dialog({
   ...props
@@ -38,7 +39,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/50 backdrop-blur-sm duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -68,10 +69,15 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <button className="absolute top-3 right-3 rounded-full bg-[#F5F0EB] p-3 hover:bg-[#EDE8E3] transition-colors">
-              <X className="h-5 w-5 text-black" strokeWidth={2.5} />
+            <Button
+              variant="ghost"
+              className="absolute top-2 right-2"
+              size="icon-sm"
+            >
+              <XIcon
+              />
               <span className="sr-only">Close</span>
-            </button>
+            </Button>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>
@@ -109,10 +115,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <button className="rounded-full bg-[#F5F0EB] p-3 hover:bg-[#EDE8E3] transition-colors">
-            <X className="h-5 w-5 text-black" strokeWidth={2.5} />
-            <span className="sr-only">Close</span>
-          </button>
+          <Button variant="outline">Close</Button>
         </DialogPrimitive.Close>
       )}
     </div>

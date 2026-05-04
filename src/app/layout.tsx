@@ -1,15 +1,14 @@
 import { cookies } from "next/headers"
 import { COUNTRY_COOKIE, isSupportedCountry } from "@/lib/country-context"
 import { CountryProvider } from "@/components/country/CountryProvider"
+import { ToastProvider } from "@/components/ui/toast"
 import { Inter } from "next/font/google"
+import { GeistSans } from "geist/font/sans"
 import { cn } from "@/lib/utils"
 import type { Metadata, Viewport } from "next"
 import "./globals.css"
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: "LokalAds",
@@ -29,11 +28,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const initialCountry = isSupportedCountry(raw) ? raw : null
 
   return (
-    <html lang="en" className={cn("font-sans w-full", inter.variable)}>
+    <html lang="en" className={cn("font-sans w-full", "font-sans", GeistSans.className, inter.variable)}>
       <body className="bg-slate-950/10 min-w-[375px] w-full min-h-screen overflow-x-hidden">
-        <CountryProvider initialCountry={initialCountry}>
-          {children}
-        </CountryProvider>
+        <ToastProvider>
+          <CountryProvider initialCountry={initialCountry}>
+            {children}
+          </CountryProvider>
+        </ToastProvider>
       </body>
     </html>
   )
