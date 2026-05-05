@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 
-import { useMediaQuery } from "@/lib/hooks/UseMediaQuery";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import PolicySkeleton from "@/components/footer/PolicySkeleton"
 
 import { useCountry } from "@/components/country/CountryProvider";

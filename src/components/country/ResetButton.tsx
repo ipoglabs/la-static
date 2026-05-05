@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { clearCountryCookies } from "@/lib/country-cookie";
 
 export function ResetButton() {
