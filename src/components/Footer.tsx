@@ -6,7 +6,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { useMediaQuery } from "@/lib/hooks/UseMediaQuery";
 import { Button } from "@/components/ui/button";
 import PolicySkeleton from "@/components/footer/PolicySkeleton"
 

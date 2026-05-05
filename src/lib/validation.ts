@@ -1,13 +1,6 @@
-export function isValidEmail(value: string) {
-  if (!value) return false;
-  return /^[\w-.]+@[\w-]+\.[A-Za-z]{2,}$/.test(value.trim());
+export function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
-
-export function normalizePhoneDigits(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-export function isValidPhone(value: string, minLen = 6) {
-  const digits = normalizePhoneDigits(value);
-  return digits.length >= minLen;
+export function isValidPhone(phone: string, minLen: number) {
+  return phone.replace(/\D/g, "").length >= minLen;
 }

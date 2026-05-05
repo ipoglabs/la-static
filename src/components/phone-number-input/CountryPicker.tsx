@@ -4,7 +4,7 @@ import * as React from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose, DrawerFooter } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose as DClose } from "@/components/ui/dialog";
 import { COUNTRIES, Country } from "./countries";
-import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
+import { useMediaQuery } from "@/lib/hooks/UseMediaQuery";
 
 type Props = {
   open: boolean;

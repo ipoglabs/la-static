@@ -1,4 +1,3 @@
-
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -79,97 +78,110 @@ const ChevronRightIcon = () => (
     <path fillRule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
   </svg>
 )
-const ChevronDownIcon = () => (
-  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 group-open:hidden">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 text-slate-500">
-      <path fillRule="evenodd" d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" clipRule="evenodd" />
+
+// Single chevron component that shows down when closed, up when open
+const ChevronIcon = () => (
+  <>
+    {/* Down arrow — visible when closed */}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-5 text-slate-600 group-open:hidden"
+    >
+      <path d="M6 9l6 6 6-6" />
     </svg>
-  </div>
+    {/* Up arrow — visible when open */}
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-5 text-slate-600 hidden group-open:block"
+    >
+      <path d="M18 15l-6-6-6 6" />
+    </svg>
+  </>
 )
 
-const ChevronUpIcon = () => (
-  <div className="hidden items-center justify-center w-9 h-9 rounded-full bg-slate-100 group-open:flex">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-5 text-slate-500">
-      <path fillRule="evenodd" d="M11.47 7.72a.75.75 0 0 1 1.06 0l7.5 7.5a.75.75 0 1 1-1.06 1.06L12 9.31l-6.97 6.97a.75.75 0 0 1-1.06-1.06l7.5-7.5Z" clipRule="evenodd" />
-    </svg>
-  </div>
-)
 export default function HomePage() {
-  // ─── 1. Loading state declared at the top of the component ───
   const [isLoading, setIsLoading] = useState(true);
 
-  // ─── 2. Timer to simulate data fetch — swap setTimeout for your
-  //        real data-fetching logic (e.g. resolve when SWR/React Query
-  //        returns data) and call setIsLoading(false) when done ───
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 4800);
-    return () => clearTimeout(timer); // cleanup on unmount
+    return () => clearTimeout(timer);
   }, []);
 
-  // ─── 3. Early return: render skeleton until data is ready ───
   if (isLoading) return <HomePageSkeleton />;
-
 
   return (
     <div className="bg-slate-300">
       <Header />
       <SearchBar />
-{/* Category Grid */}
-<div className="container mx-auto px-0 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
-  {categories.map((cat) => (
-    <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
-<summary
-  className={`
-    cursor-pointer list-none relative
-    flex items-center justify-between
-    rounded-2xl group-open:rounded-b-none
-    px-4 py-4
-    ${cat.bg}
-    border border-slate-300
-    shadow-[0_6px_16px_rgba(0,0,0,0.08)]
-    transition active:scale-[0.98]
-  `}
->
-  <Image
-    src={cat.icon}
-    alt={cat.title}
-    width={100}
-    height={100}
-    className="flex-none mr-3 w-14 h-14 object-contain"
-  />
 
-  {/* Title & desc */}
-  <div className="relative z-10 flex-1 pr-10">
-    <h2 className="text-xl font-bold text-slate-700">
-      {cat.title}
-    </h2>
-    <p className="text-base text-slate-700">
-      {cat.desc}
-    </p>
-  </div>
-
-  {/* Chevron */}
-  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
-    <ChevronDownIcon />
-  </div>
-</summary>
-
-      <ul className="bg-white rounded-lg border border-slate-400 divide-y divide-dashed divide-slate-300 p-1 group-open:rounded-t-none -mt-1">
-        {cat.items.map((item) => (
-          <li key={item}>
-            <Link
-              href="/listing"
-              className="flex items-center justify-between pl-5 pr-2 py-1 text-slate-900 hover:font-semibold hover:text-emerald-800 hover:bg-emerald-100 rounded-md"
+      {/* Category Grid */}
+      <div className="container mx-auto px-0 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
+        {categories.map((cat) => (
+          <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
+            <summary
+              className={`
+                cursor-pointer list-none relative
+                flex items-center justify-between
+                rounded-2xl group-open:rounded-b-none
+                px-4 py-4
+                ${cat.bg}
+                border border-slate-300
+                shadow-[0_6px_16px_rgba(0,0,0,0.08)]
+                transition active:scale-[0.98]
+              `}
             >
-              <span>{item}</span>
-              <ChevronRightIcon />
-            </Link>
-          </li>
+              <Image
+                src={cat.icon}
+                alt={cat.title}
+                width={100}
+                height={100}
+                className="flex-none mr-3 w-14 h-14 object-contain"
+              />
+
+              {/* Title & desc */}
+              <div className="relative z-10 flex-1 pr-10">
+                <h2 className="text-xl font-bold text-slate-700">
+                  {cat.title}
+                </h2>
+                <p className="text-base text-slate-700">
+                  {cat.desc}
+                </p>
+              </div>
+
+              {/* Chevron */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-slate-200">
+                <ChevronIcon />
+              </div>
+            </summary>
+
+            <ul className="bg-white rounded-lg border border-slate-400 divide-y divide-dashed divide-slate-300 p-1 group-open:rounded-t-none -mt-1">
+              {cat.items.map((item) => (
+                <li key={item}>
+                  <Link
+                    href="/listing"
+                    className="flex items-center justify-between pl-5 pr-2 py-1 text-slate-900 hover:font-semibold hover:text-emerald-800 hover:bg-emerald-100 rounded-md"
+                  >
+                    <span>{item}</span>
+                    <ChevronRightIcon />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
         ))}
-      </ul>
-    </details>
-  ))}
-</div>
+      </div>
 
       {/* Stats Section */}
       <div className="bg-slate-300 py-5 border-2 border-t border-slate-400">
@@ -209,7 +221,8 @@ export default function HomePage() {
 
         </div>
       </div>
-<Footer />
+
+      <Footer />
     </div>
   )
 }

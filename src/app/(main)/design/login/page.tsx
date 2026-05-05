@@ -175,8 +175,8 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const showPasswordError = passwordTouched && password.length < 6;
 
   return (
-    <div className={cn("flex flex-col gap-4", className)} {...props}>
-    <Card
+     <div className={cn("flex flex-col gap-4", className)} {...props}>
+            <Card
         className={cn(
           "shadow-[0_0_12px_rgba(0,0,0,0.45)] border-gray-200 rounded-2xl",
           shake && "animate-shake ring-2 ring-red-400"
@@ -403,14 +403,10 @@ function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
 
 export default function LoginSnippet() {
   return (
-    <main className="relative min-h-screen w-full flex items-center justify-center px-6 py-10">
-      <div className="absolute inset-0 bg-[url('/bg-market-place-vintage.png')] bg-cover bg-center bg-no-repeat" />
-      <div className="absolute inset-0 bg-black/40" />
-      <div className="relative z-10 w-full flex items-center justify-center">
-        <section className="shadow-2xl bg-white/95 backdrop-blur-md rounded-2xl w-full max-w-sm">
-          <LoginForm />
-        </section>
-      </div>
+    <main className="min-h-screen w-full flex items-center justify-center px-6 py-10 bg-[url('/bg-market-place-vintage.png')] bg-cover bg-center bg-no-repeat">
+      <section className="w-full max-w-md">
+        <LoginForm />
+      </section>
     </main>
   );
 }

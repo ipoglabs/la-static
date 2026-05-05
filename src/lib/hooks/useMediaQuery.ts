@@ -1,12 +1,7 @@
-import { useState, useEffect } from "react";
+"use client";
 
-/**
- * Returns true when the given media query matches.
- * SSR-safe — always returns false on the server.
- *
- * @example
- * const isDesktop = useMediaQuery("(min-width: 768px)");
- */
+import { useEffect, useState } from "react";
+
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
 
@@ -16,6 +11,7 @@ export function useMediaQuery(query: string): boolean {
 
     const listener = (e: MediaQueryListEvent) => setMatches(e.matches);
     media.addEventListener("change", listener);
+
     return () => media.removeEventListener("change", listener);
   }, [query]);
 
