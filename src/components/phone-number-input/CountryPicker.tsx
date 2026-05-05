@@ -24,6 +24,7 @@ export function CountryPicker({ open, onClose, selected, onSelect, countries }: 
       <div className="divide-y divide-slate-200">
         {list.map((c) => {
           const isSelected = selected?.code === c.code;
+          const Flag = c.Flag;
           return (
             <button
               key={c.code}
@@ -38,7 +39,7 @@ export function CountryPicker({ open, onClose, selected, onSelect, countries }: 
               }
             >
               <span className="flex-none">
-                <c.Flag className="rounded-sm" />
+                <Flag className="rounded-sm" />
               </span>
               <span className="flex-1">
                 <div className={`text-sm font-normal ${isSelected ? "text-blue-900" : ""}`}>{c.name} <span className="text-sm text-slate-500">(+{c.dial})</span></div>
