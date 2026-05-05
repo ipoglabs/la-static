@@ -15,19 +15,14 @@ export type PhoneNumberInputProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** forwarded ref alternative for the input element */
   inputRef?: React.Ref<HTMLInputElement>;
-  /** id for the inner input — useful for label association */
   id?: string;
-  /** visible label text for the input */
   label?: string;
-  /** class applied specifically to the input element */
   inputClassName?: string;
   maxLength?: number;
   showFlag?: boolean;
-  countries?: Country[]; // override full list
-  onlyCountries?: string[]; // list of ISO2 codes to limit
-  /** id of an element that describes the input (error/help) */
+  countries?: Country[];
+  onlyCountries?: string[];
   inputDescribedBy?: string;
 };
 
@@ -70,13 +65,18 @@ export const PhoneNumberInput = React.forwardRef<HTMLInputElement, PhoneNumberIn
       return COUNTRIES[0];
     }, [country, defaultCountry]);
 
-    const [selected, setSelected] = React.useState<Country>(initialCountry as Country || COUNTRIES[0]);
+    const [selected, setSelected] = React.useState<Country>(
+      (initialCountry as Country) || COUNTRIES[0]
+    );
 
-    // derive list
-    const providedList = countries && countries.length ? countries : COUNTRIES;
-    const visibleList = onlyCountries && onlyCountries.length
-      ? providedList.filter((c: Country) => onlyCountries.includes(c.code))
-      : providedList;
+    // ✅ FIX HERE
+    const providedList: Country[] =
+      countries && countries.length ? countries : [...COUNTRIES];
+
+    const visibleList: Country[] =
+      onlyCountries && onlyCountries.length
+        ? providedList.filter((c) => onlyCountries.includes(c.code))
+        : providedList;
 
     React.useEffect(() => {
       if (country) setSelected(country);
@@ -107,8 +107,8 @@ export const PhoneNumberInput = React.forwardRef<HTMLInputElement, PhoneNumberIn
 
     const displayValue = controlled ? value! : internal;
 
-       // merge refs for the input element (forwarded ref + inputRef prop)
     const inputInternalRef = React.useRef<HTMLInputElement | null>(null);
+
     function assignRef<T>(r: React.Ref<T> | undefined, value: T | null) {
       if (!r) return;
       if (typeof r === "function") {
@@ -162,9 +162,7 @@ export const PhoneNumberInput = React.forwardRef<HTMLInputElement, PhoneNumberIn
                 "focus-visible:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:ring-offset-1",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 inputClassName,
-              ]
-                .filter(Boolean)
-                .join(" ")
+              ].join(" ")
             )}
             aria-label={placeholder}
           />
