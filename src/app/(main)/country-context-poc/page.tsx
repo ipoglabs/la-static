@@ -6,8 +6,8 @@ import {
 import { COUNTRIES } from "@/lib/data/countries";
 import { ResetButton } from "@/components/country/ResetButton";
 
-export default function CountryContextPocPage() {
-  const jar = cookies();
+export default async function CountryContextPocPage() {
+  const jar = await cookies(); // ✅ FIX
   const raw = jar.get(COUNTRY_COOKIE)?.value ?? "";
   const isResolved = isSupportedCountry(raw);
 
