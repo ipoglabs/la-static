@@ -17,7 +17,7 @@ import {
   DialogClose as DClose,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { COUNTRIES, Country } from "./countries";
+import { COUNTRIES, Country } from "@/lib/data/countries";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 type Props = {

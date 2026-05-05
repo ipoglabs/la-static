@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { COUNTRIES, Country } from "./countries";
+import { COUNTRIES, Country } from "@/lib/data/countries";
 import CountryPicker from "./CountryPicker";
 import { cn } from "@/lib/utils";
 
