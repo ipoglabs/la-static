@@ -107,9 +107,7 @@ export const PhoneNumberInput = React.forwardRef<HTMLInputElement, PhoneNumberIn
 
     const displayValue = controlled ? value! : internal;
 
-    const FlagComp = (selected && selected.Flag) || COUNTRIES[0].Flag;
-
-    // merge refs for the input element (forwarded ref + inputRef prop)
+       // merge refs for the input element (forwarded ref + inputRef prop)
     const inputInternalRef = React.useRef<HTMLInputElement | null>(null);
     function assignRef<T>(r: React.Ref<T> | undefined, value: T | null) {
       if (!r) return;
@@ -136,7 +134,7 @@ export const PhoneNumberInput = React.forwardRef<HTMLInputElement, PhoneNumberIn
               aria-label="Open country selector"
               className="inline-flex items-center gap-2 px-2 py-1 rounded-md bg-slate-200 text-slate-800 text-sm hover:bg-slate-300"
             >
-              {showFlag && <FlagComp className="h-4 w-6" />}
+              {showFlag && <span className="text-lg">{selected.flag}</span>}
               <span className="font-medium">+{selected.dial}</span>
             </button>
           </div>
