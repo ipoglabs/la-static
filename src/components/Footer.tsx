@@ -3,11 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { X } from "lucide-react";
 
 
 import { useMediaQuery } from "@/lib/hooks/UseMediaQuery";
-import { Button } from "@/components/ui/button";
 import PolicySkeleton from "@/components/footer/PolicySkeleton"
 
 import { useCountry } from "@/components/country/CountryProvider";
