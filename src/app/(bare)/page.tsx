@@ -127,7 +127,7 @@ export default function HomePage() {
       <SearchBar />
 
       {/* Category Grid */}
-      <div className="container mx-auto px-2 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
+      <div className="container mx-auto px-2 py-4 columns-1 sm:columns-2 md:columns-3 gap-3 max-w-screen-lg">
         {categories.map((cat) => (
           <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
             <summary
@@ -147,7 +147,7 @@ export default function HomePage() {
               alt={cat.title}
               width={100}
               height={100}
-              className="flex-none mr-3 w-20 h-20 object-contain border-2 border-slate-200 rounded-xl p-1"
+              className="flex-none mr-3 w-22 h-22 object-contain border-2 border-slate-200 rounded-xl p-1"
              />
               {/* Title & desc */}
               <div className="relative z-10 flex-1 pr-2">
