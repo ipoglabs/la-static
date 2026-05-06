@@ -127,7 +127,7 @@ export default function HomePage() {
       <SearchBar />
 
       {/* Category Grid */}
-      <div className="container mx-auto px-0 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
+      <div className="container mx-auto px-2 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
         {categories.map((cat) => (
           <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
             <summary
@@ -135,23 +135,22 @@ export default function HomePage() {
                 cursor-pointer list-none relative
                 flex items-center justify-between
                 rounded-2xl group-open:rounded-b-none
-                px-4 py-4
+                px-0 py-0
                 ${cat.bg}
                 border border-slate-300
                 shadow-[0_6px_16px_rgba(0,0,0,0.08)]
                 transition active:scale-[0.98]
               `}
             >
-              <Image
-                src={cat.icon}
-                alt={cat.title}
-                width={100}
-                height={100}
-                className="flex-none mr-3 w-14 h-14 object-contain"
-              />
-
+             <Image
+             src={cat.icon}
+              alt={cat.title}
+              width={100}
+              height={100}
+              className="flex-none mr-3 w-20 h-20 object-contain border-2 border-slate-200 rounded-xl p-1"
+             />
               {/* Title & desc */}
-              <div className="relative z-10 flex-1 pr-10">
+              <div className="relative z-10 flex-1 pr-2">
                 <h2 className="text-xl font-bold text-slate-700">
                   {cat.title}
                 </h2>

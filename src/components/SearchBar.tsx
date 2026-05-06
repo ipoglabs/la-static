@@ -49,11 +49,11 @@ export default function SearchBar() {
           </button>
         </div>
 
-        {/* 📍 LOCATION */}
-        <div className="flex w-full">
+        {/* 📍 LOCATION + CREATE ALERT */}
+        <div className="flex w-full items-center gap-2 pb-1">
 
           {/* INPUT */}
-          <div className="relative flex-1 min-w-0">
+          <div className="relative w-48 sm:w-64 flex-shrink-0">
 
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -77,7 +77,7 @@ export default function SearchBar() {
           {/* RADIUS */}
           <button
             type="button"
-            className="flex items-center bg-slate-200 border-l px-4 rounded-r-md text-sm whitespace-nowrap flex-shrink-0"
+            className="flex items-center bg-slate-200 border-l px-4 h-[38px] rounded-r-md text-sm whitespace-nowrap flex-shrink-0"
           >
             + 0 miles
             <svg
@@ -88,32 +88,32 @@ export default function SearchBar() {
               <path d="M10 12l-5-5h10l-5 5z" />
             </svg>
           </button>
+
+          {/* CREATE ALERT */}
+          <Link
+            href="#"
+            className="flex items-center gap-2 text-slate-100 text-sm font-semibold hover:text-rose-400 ml-auto whitespace-nowrap"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="size-5 rotate-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+              />
+            </svg>
+            Create Alert
+          </Link>
+
         </div>
       </form>
 
-      {/* CREATE ALERT */}
-      <div className="container mx-auto px-4 pt-2 pb-1 max-w-screen-lg flex justify-end">
-        <Link
-          href="#"
-          className="flex items-center gap-2 text-slate-100 text-sm font-semibold hover:text-rose-400"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="size-5 rotate-12"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-            />
-          </svg>
-          Create Alert
-        </Link>
-      </div>
     </div>
   );
 }
