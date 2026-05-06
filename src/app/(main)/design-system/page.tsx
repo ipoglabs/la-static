@@ -12,6 +12,7 @@ const sections = [
     borderColor: "border-violet-200",
     bgLight: "bg-violet-50",
     items: [
+      
       { title: "Typography", desc: "Headings, body, captions, labels", href: "/design/typo", icon: "T" },
       { title: "Button", desc: "Primary, secondary, ghost, icon variants", href: "/design/button", icon: "B" },
       { title: "Text Input", desc: "Input, textarea, search field", href: "/design/text-input", icon: "⌨" },
@@ -32,6 +33,7 @@ const sections = [
     borderColor: "border-sky-200",
     bgLight: "bg-sky-50",
     items: [
+      { title: "Timeline", desc: "Step-by-step progress tracker", href: "/design-system/timeline", icon: "⏱" },
       { title: "Date Input", desc: "Date picker with calendar overlay", href: "/design/date-input", icon: "📅" },
       { title: "Phone Number Input", desc: "Country code + number field", href: "/design/phone-input", icon: "📞" },
       { title: "Overlay Country Selection", desc: "Searchable country picker", href: "/design/country-select", icon: "🌐" },
