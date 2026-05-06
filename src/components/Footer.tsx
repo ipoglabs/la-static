@@ -102,7 +102,7 @@ const found = COUNTRIES.find((c) => c.code === country);
             <p className="text-slate-300 text-sm font-normal mt-2">
               find anything with lokalads, its just secure..
             </p>
-            
+            <Link className="my-1 block text-sm text-slate-200" href="/design-system">Design System</Link>
           </summary>
 
           {/* Collapsable Links */}
