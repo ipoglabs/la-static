@@ -13,9 +13,9 @@ const sections = [
     bgLight: "bg-violet-50",
     items: [
       
-      { title: "Typography", desc: "Headings, body, captions, labels", href: "/design/typo", icon: "T" },
-      { title: "Button", desc: "Primary, secondary, ghost, icon variants", href: "/design/button", icon: "B" },
-      { title: "Text Input", desc: "Input, textarea, search field", href: "/design/text-input", icon: "⌨" },
+      { title: "Typography", desc: "Headings, body, captions, labels", href: "/design-system/typography", icon: "T" },
+      { title: "Button", desc: "Primary, secondary, ghost, icon variants", href: "/design-system/button-variants", icon: "B" },
+      { title: "Text Input", desc: "Input, textarea, search field", href: "/design-system/rich-text-editor", icon: "⌨" },
       { title: "Radio Button", desc: "Single select, grouped options", href: "/design/radio", icon: "◉" },
       { title: "Toggle Button Group", desc: "Multi-select, segmented control", href: "/design/toggle-group", icon: "⊞" },
       { title: "Sheet", desc: "Bottom / side slide-in panel", href: "/design/sheet", icon: "▤" },
