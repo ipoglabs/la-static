@@ -1,8 +1,18 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
+import { useCountry } from "@/components/country/CountryProvider";
+import { LocationPicker } from "@/components/location-picker";
+import type { LocationValue } from "@/components/location-picker";
+
+const SCOPE_CODE_MAP: Record<string, string> = { GB: "UK" };
 
 export default function SearchBar() {
+  const { country } = useCountry();
+  const [location, setLocation] = useState<LocationValue | null>(null);
+
+  const scopeCode = country ? (SCOPE_CODE_MAP[country] ?? country) : null;
+
   return (
     <div className="bg-slate-800 pt-4 pb-8 shadow-gray-200 shadow-lg w-full">
 
@@ -48,6 +58,14 @@ export default function SearchBar() {
             GO
           </button>
         </div>
+
+        {/* 📍 LOCATION */}
+        {scopeCode && (
+          <LocationPicker
+            countryScope={[scopeCode]}
+            onChange={setLocation}
+          />
+        )}
 
       </form>
 

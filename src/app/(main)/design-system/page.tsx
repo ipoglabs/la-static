@@ -37,7 +37,7 @@ const sections = [
       { title: "Date Input", desc: "Date picker with calendar overlay", href: "/design/date-input", icon: "📅" },
       { title: "Phone Number Input", desc: "Country code + number field", href: "/design/phone-input", icon: "📞" },
       { title: "Overlay Country Selection", desc: "Searchable country picker", href: "/design/country-select", icon: "🌐" },
-      { title: "Location Picker", desc: "Map-based location selector", href: "/design/location-picker", icon: "📍" },
+      { title: "Location Picker", desc: "Map-based location selector", href: "/design-system/location-picker", icon: "📍" },
       { title: "Phone OTP", desc: "SMS one-time password flow", href: "/design/phone-otp", icon: "🔢" },
       { title: "Email OTP", desc: "Email one-time password flow", href: "/design/email-otp", icon: "✉" },
     ],
