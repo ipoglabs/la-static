@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { ToggleButtonGroup, ToggleGroupButton } from "@/components/toggle-group/CompoundToggleGroup";
 import {
   STATIC_SUGGESTIONS,
-  mockGoogleSearch,
   matchesScope,
   SearchSuggestion,
 } from "./LocationSearch";
@@ -241,7 +240,9 @@ function PanelContent({
         setLoading(true);
         setFetchError(null);
         try {
-          let suggestions = await mockGoogleSearch(q);
+          const res = await fetch(`/api/places?input=${encodeURIComponent(q)}`);
+          if (!res.ok) throw new Error("Places API error");
+          let suggestions: SearchSuggestion[] = await res.json();
           if (countryScope?.length) {
             suggestions = suggestions.filter((s) => matchesScope(s.sublabel, countryScope));
           }
@@ -517,14 +518,11 @@ function PanelContent({
 
 // ─── Pill helpers ───────────────────────────────────────────────────────────────
 
-// Shown in pill when no location is set — displays scoped country name as hint
 const SCOPE_LABELS: Record<string, string> = {
   UK: "United Kingdom", SG: "Singapore", IN: "India",
   US: "United States", AU: "Australia", AE: "UAE", CA: "Canada",
 };
 
-// Strips the trailing country segment from sublabel so pill reads "Birmingham, West Midlands"
-// rather than "Birmingham, West Midlands, UK" — user already knows their country context.
 function buildPillText(label: string, sublabel?: string): string {
   if (!sublabel) return label;
   const parts = sublabel.split(", ");
@@ -556,7 +554,6 @@ export function LocationPicker({
   const [gpsError, setGpsError] = React.useState<string | null>(null);
   const [gpsPermissionDenied, setGpsPermissionDenied] = React.useState(false);
 
-  // Persistent across panel opens — cleared items stay cleared
   const [recentItems, setRecentItems] = React.useState<SearchSuggestion[]>(() =>
     countryScope?.length
       ? ALL_RECENT.filter((s) => matchesScope(s.sublabel, countryScope))
@@ -619,7 +616,6 @@ export function LocationPicker({
   const pillLabel = current
     ? buildPillText(current.label, current.sublabel)
     : (scopeDefault ?? "Set location");
-  // Full tooltip — shows complete sublabel including country on hover
   const pillTitle = current?.sublabel
     ? `${current.label}, ${current.sublabel}`
     : pillLabel;
@@ -628,7 +624,6 @@ export function LocationPicker({
       ? `±${current.radius} ${current.unit ?? radiusUnit}`
       : null;
 
-  // Shared panel content (mounts fresh on each open inside the Drawer/Dialog)
   const panel = (
     <PanelContent
       current={current}

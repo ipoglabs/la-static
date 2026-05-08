@@ -226,8 +226,9 @@ export function LocationSearch({
         setLoading(true);
         setFetchError(null);
         try {
-          // ── MOCK: replace mockGoogleSearch with realGoogleSearch when ready ──
-          let suggestions = await mockGoogleSearch(q);
+          const res = await fetch(`/api/places?input=${encodeURIComponent(q)}`);
+          if (!res.ok) throw new Error("Places API error");
+          let suggestions: SearchSuggestion[] = await res.json();
           if (countryScope?.length) {
             suggestions = suggestions.filter((s) => matchesScope(s.sublabel, countryScope));
           }

@@ -64,6 +64,7 @@ export default function SearchBar() {
           <LocationPicker
             countryScope={[scopeCode]}
             onChange={setLocation}
+            searchProvider="google"
           />
         )}
 

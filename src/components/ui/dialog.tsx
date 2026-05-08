@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Dialog = DialogPrimitive.Root;
@@ -51,10 +50,6 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 p-1.5 rounded-full bg-slate-100 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4 text-slate-700" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
@@ -63,8 +58,8 @@ DialogContent.displayName = DialogPrimitive.Content.displayName;
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "px-4 pt-3 pb-3 rounded-t-2xl bg-gradient-to-b from-slate-50 to-slate-100 border-b border-slate-200/60",
-      "flex items-start justify-between gap-3",
+      "px-4 pr-2 py-2 rounded-t-2xl bg-linear-to-b from-slate-100 to-slate-200 border-b border-slate-200/60",
+      "flex items-center justify-between gap-3",
       className
     )}
     {...props}
@@ -83,7 +78,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-base font-medium text-slate-800 pr-6", className)}
+    className={cn("text-sm font-semibold text-slate-600 pr-6", className)}
     {...props}
   />
 ));
