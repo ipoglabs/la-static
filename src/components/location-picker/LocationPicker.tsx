@@ -221,10 +221,13 @@ function PanelContent({
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-focus search input when panel mounts
-  React.useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 80);
-    return () => clearTimeout(t);
-  }, []);
+ React.useEffect(() => {
+  const t = setTimeout(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, 250);
+
+  return () => clearTimeout(t);
+}, []);
 
   // Search
   React.useEffect(() => {
