@@ -118,9 +118,9 @@ function LocationRow({
       >
         <IconPin className={cn("h-4 w-4 flex-none", isSaved ? "text-blue-500" : "text-slate-400")} />
         <div className="min-w-0">
-          <div className="truncate text-sm font-normal text-slate-800">{suggestion.label}</div>
+          <div className="truncate text-base font-normal text-slate-800">{suggestion.label}</div>
           {suggestion.sublabel && (
-            <div className="truncate text-xs font-light text-slate-800">{suggestion.sublabel}</div>
+            <div className="truncate text-sm font-light text-slate-800">{suggestion.sublabel}</div>
           )}
         </div>
       </button>
@@ -220,14 +220,14 @@ function PanelContent({
   const inputRef = React.useRef<HTMLInputElement>(null);
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-focus search input when panel mounts
- React.useEffect(() => {
-  const t = setTimeout(() => {
-    inputRef.current?.focus({ preventScroll: true });
-  }, 250);
-
-  return () => clearTimeout(t);
-}, []);
+  // Auto-focus search input and scroll into view when keyboard opens
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: false });
+      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+    return () => clearTimeout(t);
+  }, []);
 
   // Search
   React.useEffect(() => {
@@ -302,7 +302,7 @@ function PanelContent({
           )}
         </button>
 
-          <div className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-slate-200 px-3 py-1.5">
+        <div className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-slate-200 px-3 py-1.5">
           {loading ? (
             <svg className="h-4 w-4 flex-none animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
               <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
@@ -315,7 +315,12 @@ function PanelContent({
           )}
           <input
             ref={inputRef}
-            type="text"
+            type="search"
+            inputMode="search"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
@@ -494,25 +499,21 @@ function PanelContent({
         </DialogContent>
       </Dialog>
 
-      {/* Radius pills — pinned at bottom */}
-      {showRadius && (
-        <div className="bg-slate-100 border-t border-slate-300 px-4 py-3">
-          <p className="mb-2 text-xs font-light text-slate-800">WITHIN</p>
-          <ToggleButtonGroup
-            singleSelect
-            requireSelection
-            value={current?.radius != null ? [String(current.radius)] : []}
-            onChange={(vals) => {
-              if (!vals[0]) return;
-              onRadiusChange(parseFloat(vals[0]));
-            }}
-          >
-            {RADIUS_OPTIONS.map((r) => (
-              <ToggleGroupButton key={r} value={String(r)} size="compact" disabled={!current}>
-                {r} {radiusUnit}
-              </ToggleGroupButton>
-            ))}
-          </ToggleButtonGroup>
+      {/* Selected location footer — pinned at bottom */}
+      {current && (
+        <div className="bg-slate-100 border-t border-slate-300 px-4 py-3 flex items-center gap-3">
+          <IconPin className="h-4 w-4 flex-none text-blue-500" />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-slate-800">{current.label}</div>
+            {current.sublabel && (
+              <div className="truncate text-xs font-light text-slate-500">{current.sublabel}</div>
+            )}
+          </div>
+          {showRadius && current.radius != null && (
+            <span className="ml-auto whitespace-nowrap rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+              ±{current.radius} {radiusUnit}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -743,7 +744,10 @@ export function LocationPicker({
           </Dialog>
         ) : (
           <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerContent className="flex h-[90dvh] flex-col overflow-hidden">
+            <DrawerContent
+              className="flex h-[90dvh] flex-col overflow-hidden"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
               <div className="relative flex items-center justify-center bg-linear-to-b from-slate-100 to-white px-4 py-2.5">
                 <DrawerTitle className="text-sm font-semibold text-slate-700 tracking-tight">Set Location</DrawerTitle>
                 <DrawerClose asChild>
@@ -810,7 +814,8 @@ export function LocationPicker({
             </div>
           </DialogContent>
         </Dialog>
-      )}    </div>
+      )}
+    </div>
   );
 }
 
