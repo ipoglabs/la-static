@@ -417,7 +417,7 @@ function PanelContent({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
-            className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
+            className="flex-1 bg-transparent text-base text-slate-900 placeholder:text-slate-700 outline-none disabled:cursor-not-allowed"
           />
           {query && (
             <button
@@ -590,24 +590,38 @@ function PanelContent({
           </div>
         </DialogContent>
       </Dialog>
+      {/* Radius footer */}
+      {showRadius && (
+        <div className="border-t border-slate-200 bg-white px-4 py-3">
+         <p className="mb-2 truncate text-sm font-medium text-slate-700">
+  {current
+    ? buildPillText(current.label, current.sublabel)
+    : "Select location"}
+</p>
 
-      {/* Selected location footer — pinned at bottom */}
-      {current && (
-        <div className="bg-slate-100 border-t border-slate-300 px-4 py-3 flex items-center gap-3">
-          <IconPin className="h-4 w-4 flex-none text-blue-500" />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-slate-800">{current.label}</div>
-            {current.sublabel && (
-              <div className="truncate text-xs font-light text-slate-500">{current.sublabel}</div>
-            )}
-          </div>
-          {showRadius && current.radius != null && (
-            <span className="ml-auto whitespace-nowrap rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-              ±{current.radius} {radiusUnit}
-            </span>
-          )}
+          <ToggleButtonGroup
+            singleSelect
+            requireSelection
+            value={current?.radius != null ? [String(current.radius)] : []}
+            onChange={(vals) => {
+              if (!vals[0]) return;
+              onRadiusChange(parseFloat(vals[0]));
+            }}
+          >
+            {RADIUS_OPTIONS.map((r) => (
+              <ToggleGroupButton
+                key={r}
+                value={String(r)}
+                size="default"
+                disabled={!current}
+              >
+                {r} {radiusUnit}
+              </ToggleGroupButton>
+            ))}
+          </ToggleButtonGroup>
         </div>
       )}
+      
     </div>
   );
 }
