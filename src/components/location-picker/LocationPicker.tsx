@@ -278,7 +278,7 @@ function PanelContent({
     <div className="flex flex-col flex-1 min-h-0">
 
       {/* GPS icon + Search input — single combined row */}
-      <div className="flex items-center gap-2 border-t border-b border-lime-200 bg-lime-100 px-3 py-2">
+      <div className="sticky top-0 z-20 flex items-center gap-2 border-t border-b border-lime-200 bg-lime-100 px-3 py-2">
         <button
           type="button"
           onClick={onRequestGps}
@@ -339,7 +339,7 @@ function PanelContent({
       {fetchError && <p className="px-4 pt-1.5 pb-0 text-xs text-red-400">{fetchError}</p>}
 
       {/* Main scrollable area — results when typing, grouped list otherwise */}
-      <div className="min-h-0 flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500">
         {isTyping ? (
           results.length === 0 && !loading ? (
             <p className="px-4 py-10 text-center text-sm text-slate-400">
@@ -740,7 +740,7 @@ export function LocationPicker({
           </Dialog>
         ) : (
           <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerContent className="flex min-h-[80vh] max-h-[90dvh] flex-col">
+            <DrawerContent className="flex h-[90dvh] flex-col overflow-hidden">
               <div className="relative flex items-center justify-center bg-linear-to-b from-slate-100 to-white px-4 py-2.5">
                 <DrawerTitle className="text-sm font-semibold text-slate-700 tracking-tight">Set Location</DrawerTitle>
                 <DrawerClose asChild>
