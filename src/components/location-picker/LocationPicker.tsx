@@ -65,6 +65,98 @@ const ALL_SAVED: SearchSuggestion[] = [
 
 const RADIUS_OPTIONS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
+// ─── Reverse geocode helper ───────────────────────────────────────────────────
+
+async function reverseGeocode(
+  lat: number,
+  lng: number
+): Promise<{ label: string; sublabel?: string }> {
+  // 1️⃣ Try your own API route first
+  try {
+    const res = await fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.label) return data;
+    }
+  } catch {
+    // fall through to direct Google call
+  }
+
+  // 2️⃣ Direct Google Geocoding API call as fallback
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) throw new Error("No API key");
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+    );
+    const data = await res.json();
+    if (data.status === "OK" && data.results?.length) {
+      const result = data.results[0];
+      const components: { types: string[]; long_name: string }[] =
+        result.address_components ?? [];
+
+      const get = (type: string) =>
+        components.find((c) => c.types.includes(type))?.long_name ?? "";
+
+      const neighborhood =
+        get("neighborhood") || get("sublocality_level_1") || get("sublocality");
+      const locality = get("locality") || get("postal_town");
+      const area     = get("administrative_area_level_2");
+      const country  = get("country");
+
+      const label = neighborhood || locality || area || result.formatted_address;
+
+      const sublabelParts = [
+        neighborhood && locality ? locality : null,
+        area && area !== label && area !== locality ? area : null,
+        country,
+      ].filter(Boolean);
+
+      return {
+        label,
+        sublabel: sublabelParts.length ? sublabelParts.join(", ") : undefined,
+      };
+    }
+  } catch {
+    // fall through to Open Street Map
+  }
+
+  // 3️⃣ Free fallback — OpenStreetMap Nominatim (no API key needed)
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      { headers: { "Accept-Language": "en" } }
+    );
+    const data = await res.json();
+    if (data?.address) {
+      const a = data.address;
+      const label =
+        a.neighbourhood ||
+        a.suburb ||
+        a.village ||
+        a.town ||
+        a.city ||
+        a.county ||
+        a.state ||
+        data.display_name.split(",")[0];
+      const sublabelParts = [
+        a.city || a.town || a.village || (a.suburb !== label ? a.suburb : null),
+        a.state,
+        a.country,
+      ].filter(Boolean);
+      return {
+        label,
+        sublabel: sublabelParts.length ? sublabelParts.join(", ") : undefined,
+      };
+    }
+  } catch {
+    // all attempts failed
+  }
+
+  // 4️⃣ Last resort — just show a generic named label, never raw coords
+  return { label: "Nearby Location", sublabel: undefined };
+}
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function IconCrosshair({ className }: { className?: string }) {
@@ -578,7 +670,8 @@ export function LocationPicker({
     onChange?.(v);
   }
 
-  function requestGps() {
+  // ─── GPS with reverse geocoding ───────────────────────────────────────────
+  async function requestGps() {
     if (!navigator.geolocation) {
       setGpsError("Geolocation is not supported by your browser");
       return;
@@ -586,17 +679,23 @@ export function LocationPicker({
     setGpsLoading(true);
     setGpsError(null);
     setGpsPermissionDenied(false);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+
+        // Reverse geocode to get actual address label
+        const { label, sublabel } = await reverseGeocode(lat, lng);
+
         setGpsLoading(false);
-        const next: LocationValue = {
-          label: "Current Location",
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+        emit({
+          label,
+          sublabel,
+          lat,
+          lng,
           radius: current?.radius ?? (showRadius ? RADIUS_OPTIONS[0] : undefined),
           unit: current?.unit ?? radiusUnit,
-        };
-        emit(next);
+        });
         setOpen(false);
       },
       (err) => {
@@ -711,7 +810,7 @@ export function LocationPicker({
           aria-haspopup="dialog"
           className="flex h-8 min-w-0 items-center gap-2 px-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed"
         >
-          <IconPin className="h-3.5 w-3.5 flex-none text-white/60" />
+          {/*<IconPin className="h-3.5 w-3.5 flex-none text-white/60" /> */}
           <span className="truncate" title={pillTitle}>{pillLabel}</span>
           {pillRadius && (
             <>
@@ -743,26 +842,46 @@ export function LocationPicker({
             </DialogContent>
           </Dialog>
         ) : (
-          <Drawer open={open} onOpenChange={setOpen}>
-            <DrawerContent
-              className="flex h-[90dvh] flex-col overflow-hidden"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-            >
-              <div className="relative flex items-center justify-center bg-linear-to-b from-slate-100 to-white px-4 py-2.5">
-                <DrawerTitle className="text-sm font-semibold text-slate-700 tracking-tight">Set Location</DrawerTitle>
-                <DrawerClose asChild>
-                  <button type="button" aria-label="Close" className="absolute right-3 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700">
-                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                      <path d="M18 6L6 18M6 6l12 12" strokeWidth="2.5" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </DrawerClose>
-              </div>
-              {panel}
-            </DrawerContent>
-          </Drawer>
+<Drawer open={open} onOpenChange={setOpen}>
+  <DrawerContent
+    className="h-dvh w-full overflow-hidden rounded-none"
+    style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+  >
+    <div className="relative flex items-center justify-center border-b border-slate-200 bg-linear-to-b from-slate-100 to-white px-4 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.10)]">
+      
+      <DrawerTitle className="text-[15px] font-semibold tracking-tight text-slate-800">
+        Set Location
+      </DrawerTitle>
+
+      <DrawerClose asChild>
+        <button
+          type="button"
+          aria-label="Close"
+          className="absolute right-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-lg shadow-black/20 transition-all hover:scale-105 hover:bg-slate-100 hover:text-slate-800"
+        >
+          <svg
+            className="h-4.5 w-4.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            aria-hidden
+          >
+            <path
+              d="M18 6L6 18M6 6l12 12"
+              strokeWidth="2.75"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </DrawerClose>
+    </div>
+
+    {panel}
+  </DrawerContent>
+</Drawer>
         )
       )}
+
       {/* Location permission denied dialog */}
       {mounted && (
         <Dialog open={gpsPermissionDenied} onOpenChange={(o) => { if (!o) setGpsPermissionDenied(false); }}>
