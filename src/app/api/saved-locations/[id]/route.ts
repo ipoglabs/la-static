@@ -6,6 +6,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  db.prepare("DELETE FROM saved_locations WHERE id = ?").run(id);
+  await db.execute({
+    sql: "DELETE FROM saved_locations WHERE id = ?",
+    args: [id],
+  });
   return NextResponse.json({ success: true });
 }
