@@ -27,9 +27,14 @@ export async function POST(req: Request) {
     args: [label, sublabel ?? null, lat ?? null, lng ?? null],
   });
 
+  const insertedId = result.lastInsertRowid?.toString();
+  if (!insertedId) {
+    return NextResponse.json({ error: "Insert failed" }, { status: 500 });
+  }
+
   const created = await db.execute({
     sql: "SELECT * FROM saved_locations WHERE id = ?",
-    args: [result.lastInsertRowid],
+    args: [insertedId],
   });
 
   return NextResponse.json(created.rows[0], { status: 201 });
