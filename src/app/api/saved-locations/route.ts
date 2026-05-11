@@ -1,32 +1,36 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import db, { initDb } from "@/lib/db";
 
 export async function GET() {
-  const locations = db.prepare(
+  await initDb();
+  const result = await db.execute(
     "SELECT * FROM saved_locations ORDER BY createdAt DESC"
-  ).all();
-  return NextResponse.json(locations);
+  );
+  return NextResponse.json(result.rows);
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { label, sublabel, lat, lng } = body;
+  await initDb();
+  const { label, sublabel, lat, lng } = await req.json();
 
-  const existing = db.prepare(
-    "SELECT * FROM saved_locations WHERE label = ? AND sublabel IS ?"
-  ).get(label, sublabel ?? null);
+  const existing = await db.execute({
+    sql: "SELECT * FROM saved_locations WHERE label = ? AND sublabel IS ?",
+    args: [label, sublabel ?? null],
+  });
 
-  if (existing) {
-    return NextResponse.json(existing);
+  if (existing.rows.length) {
+    return NextResponse.json(existing.rows[0]);
   }
 
-  const result = db.prepare(
-    "INSERT INTO saved_locations (label, sublabel, lat, lng) VALUES (?, ?, ?, ?)"
-  ).run(label, sublabel ?? null, lat ?? null, lng ?? null);
+  const result = await db.execute({
+    sql: "INSERT INTO saved_locations (label, sublabel, lat, lng) VALUES (?, ?, ?, ?)",
+    args: [label, sublabel ?? null, lat ?? null, lng ?? null],
+  });
 
-  const created = db.prepare(
-    "SELECT * FROM saved_locations WHERE id = ?"
-  ).get(result.lastInsertRowid);
+  const created = await db.execute({
+    sql: "SELECT * FROM saved_locations WHERE id = ?",
+    args: [result.lastInsertRowid],
+  });
 
-  return NextResponse.json(created, { status: 201 });
+  return NextResponse.json(created.rows[0], { status: 201 });
 }

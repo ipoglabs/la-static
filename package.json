@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.3",
     "@radix-ui/react-dialog": "^1.1.15",
     "better-sqlite3": "^12.9.0",
     "class-variance-authority": "^0.7.1",

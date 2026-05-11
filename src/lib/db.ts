@@ -1,20 +1,21 @@
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import { createClient } from "@libsql/client";
 
-const dbDir = path.join(process.cwd(), "data");
-if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+const db = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
 
-const db = new Database(path.join(dbDir, "app.db"));
+export async function initDb() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS saved_locations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      label TEXT NOT NULL,
+      sublabel TEXT,
+      lat REAL,
+      lng REAL,
+      createdAt TEXT DEFAULT (datetime('now'))
+    )
+  `);
+}
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS saved_locations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    label TEXT NOT NULL,
-    sublabel TEXT,
-    lat REAL,
-    lng REAL,
-    createdAt TEXT DEFAULT (datetime('now'))
-  )
-`);
 export default db;
