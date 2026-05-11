@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
-import { Drawer, DrawerContent, DrawerTitle, DrawerClose } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { ToggleButtonGroup, ToggleGroupButton } from "@/components/toggle-group/CompoundToggleGroup";
 import {
@@ -31,7 +32,6 @@ export type LocationPickerProps = {
   onChange?: (v: LocationValue | null) => void;
   showRadius?: boolean;
   radiusUnit?: RadiusUnit;
-  /** Restrict search and suggestions to these country codes, e.g. ["UK", "SG", "IN"] */
   countryScope?: string[];
   searchProvider?: "google" | "none";
   placeholder?: string;
@@ -39,27 +39,9 @@ export type LocationPickerProps = {
   className?: string;
 };
 
-// ─── Dummy data for Recent / Saved tabs ──────────────────────────────────────
+// ─── DB saved location type ───────────────────────────────────────────────────
 
-const ALL_RECENT: SearchSuggestion[] = [
-  { label: "London", sublabel: "Greater London, UK", lat: 51.5074, lng: -0.1278 },
-  { label: "Birmingham", sublabel: "West Midlands, UK", lat: 52.4862, lng: -1.8904 },
-  { label: "Manchester", sublabel: "Greater Manchester, UK", lat: 53.4808, lng: -2.2426 },
-  { label: "Singapore", sublabel: "Singapore", lat: 1.3521, lng: 103.8198 },
-  { label: "Orchard Road", sublabel: "Central, Singapore", lat: 1.3047, lng: 103.8318 },
-  { label: "Mumbai", sublabel: "Maharashtra, India", lat: 19.076, lng: 72.8777 },
-  { label: "Delhi", sublabel: "Delhi, India", lat: 28.7041, lng: 77.1025 },
-  { label: "Bangalore", sublabel: "Karnataka, India", lat: 12.9716, lng: 77.5946 },
-];
-
-const ALL_SAVED: SearchSuggestion[] = [
-  { label: "Home", sublabel: "Hackney, London, UK", lat: 51.5455, lng: -0.0553 },
-  { label: "Office", sublabel: "Canary Wharf, London, UK", lat: 51.5033, lng: -0.0235 },
-  { label: "Home", sublabel: "Tampines, Singapore", lat: 1.3543, lng: 103.9436 },
-  { label: "Office", sublabel: "Marina Bay, Singapore", lat: 1.2865, lng: 103.8614 },
-  { label: "Home", sublabel: "Bandra, Mumbai, India", lat: 19.0596, lng: 72.8295 },
-  { label: "Office", sublabel: "Connaught Place, Delhi, India", lat: 28.6329, lng: 77.2195 },
-];
+type DbSavedLocation = SearchSuggestion & { id: string };
 
 // ─── Radius options ───────────────────────────────────────────────────────────
 
@@ -71,18 +53,14 @@ async function reverseGeocode(
   lat: number,
   lng: number
 ): Promise<{ label: string; sublabel?: string }> {
-  // 1️⃣ Try your own API route first
   try {
     const res = await fetch(`/api/places/reverse?lat=${lat}&lng=${lng}`);
     if (res.ok) {
       const data = await res.json();
       if (data?.label) return data;
     }
-  } catch {
-    // fall through to direct Google call
-  }
+  } catch {}
 
-  // 2️⃣ Direct Google Geocoding API call as fallback
   try {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) throw new Error("No API key");
@@ -94,34 +72,26 @@ async function reverseGeocode(
       const result = data.results[0];
       const components: { types: string[]; long_name: string }[] =
         result.address_components ?? [];
-
       const get = (type: string) =>
         components.find((c) => c.types.includes(type))?.long_name ?? "";
-
       const neighborhood =
         get("neighborhood") || get("sublocality_level_1") || get("sublocality");
       const locality = get("locality") || get("postal_town");
-      const area     = get("administrative_area_level_2");
-      const country  = get("country");
-
+      const area = get("administrative_area_level_2");
+      const country = get("country");
       const label = neighborhood || locality || area || result.formatted_address;
-
       const sublabelParts = [
         neighborhood && locality ? locality : null,
         area && area !== label && area !== locality ? area : null,
         country,
       ].filter(Boolean);
-
       return {
         label,
         sublabel: sublabelParts.length ? sublabelParts.join(", ") : undefined,
       };
     }
-  } catch {
-    // fall through to Open Street Map
-  }
+  } catch {}
 
-  // 3️⃣ Free fallback — OpenStreetMap Nominatim (no API key needed)
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
@@ -131,14 +101,8 @@ async function reverseGeocode(
     if (data?.address) {
       const a = data.address;
       const label =
-        a.neighbourhood ||
-        a.suburb ||
-        a.village ||
-        a.town ||
-        a.city ||
-        a.county ||
-        a.state ||
-        data.display_name.split(",")[0];
+        a.neighbourhood || a.suburb || a.village || a.town ||
+        a.city || a.county || a.state || data.display_name.split(",")[0];
       const sublabelParts = [
         a.city || a.town || a.village || (a.suburb !== label ? a.suburb : null),
         a.state,
@@ -149,11 +113,8 @@ async function reverseGeocode(
         sublabel: sublabelParts.length ? sublabelParts.join(", ") : undefined,
       };
     }
-  } catch {
-    // all attempts failed
-  }
+  } catch {}
 
-  // 4️⃣ Last resort — just show a generic named label, never raw coords
   return { label: "Nearby Location", sublabel: undefined };
 }
 
@@ -194,12 +155,14 @@ function LocationRow({
   onClear,
   onSave,
   isSaved,
+  isSaving,
 }: {
   suggestion: SearchSuggestion;
   onSelect: () => void;
   onClear?: () => void;
   onSave?: () => void;
   isSaved?: boolean;
+  isSaving?: boolean;
 }) {
   return (
     <div className="flex items-center">
@@ -216,27 +179,37 @@ function LocationRow({
           )}
         </div>
       </button>
+
+      {/* Bookmark toggle — shown on recents and search results */}
       {onSave && (
         <button
           type="button"
           onClick={onSave}
+          disabled={isSaving}
           aria-label={isSaved ? `Unsave ${suggestion.label}` : `Save ${suggestion.label}`}
           title={isSaved ? "Unsave" : "Save"}
           className={cn(
-            "flex h-7 w-7 flex-none items-center justify-center rounded-full transition-colors",
+            "flex h-7 w-7 flex-none items-center justify-center rounded-full transition-colors disabled:opacity-40",
             isSaved
               ? "text-blue-500 hover:bg-blue-50"
               : "text-slate-300 hover:bg-slate-100 hover:text-slate-500"
           )}
         >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" stroke="currentColor" aria-hidden
-            fill={isSaved ? "currentColor" : "none"}
-          >
-            <path d="M5 3h14a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" strokeWidth="1.75" strokeLinejoin="round" />
-          </svg>
+          {isSaving ? (
+            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+              <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" stroke="currentColor" aria-hidden
+              fill={isSaved ? "currentColor" : "none"}
+            >
+              <path d="M5 3h14a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" strokeWidth="1.75" strokeLinejoin="round" />
+            </svg>
+          )}
         </button>
       )}
-      {/* Static bookmark badge for saved items (no onSave action) */}
+
+      {/* Static bookmark badge for saved list rows (no toggle, only delete) */}
       {isSaved && !onSave && (
         <span className="flex h-7 w-7 flex-none items-center justify-center text-blue-500" aria-label="Saved">
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" aria-hidden>
@@ -244,6 +217,8 @@ function LocationRow({
           </svg>
         </span>
       )}
+
+      {/* Remove / delete button */}
       {onClear && (
         <button
           type="button"
@@ -260,7 +235,7 @@ function LocationRow({
   );
 }
 
-// ─── Panel content (shared between Drawer and Dialog) ─────────────────────────
+// ─── Panel content ─────────────────────────────────────────────────────────────
 
 type PanelContentProps = {
   current: LocationValue | null;
@@ -274,13 +249,16 @@ type PanelContentProps = {
   gpsError: string | null;
   gpsPermissionDenied: boolean;
   recentItems: SearchSuggestion[];
-  savedItems: SearchSuggestion[];
+  savedItems: DbSavedLocation[];
+  savingKey: string | null;
+  isMobile?: boolean;
   onClearRecent: (index: number) => void;
-  onSaveRecent: (index: number) => void;
-  onClearSaved: (index: number) => void;
+  onToggleSave: (s: SearchSuggestion) => void;
+  onDeleteSaved: (id: string) => void;
   onRequestGps: () => void;
   onSelect: (s: SearchSuggestion) => void;
   onRadiusChange: (r: number) => void;
+  onClose?: () => void;
 };
 
 function PanelContent({
@@ -296,23 +274,25 @@ function PanelContent({
   gpsPermissionDenied,
   recentItems,
   savedItems,
+  savingKey,
+  isMobile = false,
   onClearRecent,
-  onSaveRecent,
-  onClearSaved,
+  onToggleSave,
+  onDeleteSaved,
   onRequestGps,
   onSelect,
   onRadiusChange,
+  onClose,
 }: PanelContentProps) {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<SearchSuggestion[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
-  const [confirmSavedIndex, setConfirmSavedIndex] = React.useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
   const [savedOnly, setSavedOnly] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-focus search input and scroll into view when keyboard opens
   React.useEffect(() => {
     const t = setTimeout(() => {
       inputRef.current?.focus({ preventScroll: false });
@@ -321,14 +301,9 @@ function PanelContent({
     return () => clearTimeout(t);
   }, []);
 
-  // Search
   React.useEffect(() => {
     const q = query.trim();
-    if (!q) {
-      setResults([]);
-      setFetchError(null);
-      return;
-    }
+    if (!q) { setResults([]); setFetchError(null); return; }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       if (searchProvider === "google") {
@@ -362,84 +337,168 @@ function PanelContent({
         setFetchError(null);
       }
     }, searchProvider === "google" ? 350 : 0);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, searchProvider, countryScope]);
 
   const isTyping = query.trim().length > 0;
 
+  const isSavedFn = (s: SearchSuggestion) =>
+    savedItems.some((sv) => sv.label === s.label && sv.sublabel === s.sublabel);
+
+  const savingKeyFor = (s: SearchSuggestion) => `${s.label}||${s.sublabel ?? ""}`;
+
   return (
     <div className="flex flex-col flex-1 min-h-0">
 
-      {/* GPS icon + Search input — single combined row */}
-      <div className="sticky top-0 z-20 flex items-center gap-2 border-t border-b border-lime-200 bg-lime-100 px-3 py-2">
-        <button
-          type="button"
-          onClick={onRequestGps}
-          disabled={gpsLoading || disabled}
-          aria-label="Use current location"
-          title="Use current location"
-          className={cn(
-            "flex h-8 w-8 flex-none items-center justify-center rounded-lg transition-colors disabled:opacity-50",
-            gpsPermissionDenied ? "text-red-500 hover:bg-red-50" : gpsError ? "text-red-400 hover:bg-slate-100" : "text-slate-500 hover:bg-slate-100"
-          )}
-        >
-          {gpsLoading ? (
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-              <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <IconCrosshair className="h-4 w-4" />
-          )}
-        </button>
-
-        <div className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-slate-200 px-3 py-1.5">
-          {loading ? (
-            <svg className="h-4 w-4 flex-none animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-              <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <svg className="h-4 w-4 flex-none text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-              <circle cx="11" cy="11" r="7" strokeWidth="1.75" />
-              <path d="M21 21l-4.35-4.35" strokeWidth="1.75" strokeLinecap="round" />
-            </svg>
-          )}
-          <input
-            ref={inputRef}
-            type="search"
-            inputMode="search"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={placeholder}
-            disabled={disabled}
-            className="flex-1 bg-transparent text-base text-slate-900 placeholder:text-slate-700 outline-none disabled:cursor-not-allowed"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => { setQuery(""); setFetchError(null); inputRef.current?.focus(); }}
-              aria-label="Clear search"
-              className="text-slate-500 transition-colors hover:text-slate-800"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                <path d="M18 6L6 18M6 6l12 12" strokeWidth="2" strokeLinecap="round" />
+      {/* ── Mobile: search bar + Cancel in header row ── */}
+      {isMobile ? (
+        <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-2.5">
+          <div className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-3 py-2">
+            {loading ? (
+              <svg className="h-4 w-4 flex-none animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
               </svg>
-            </button>
-          )}
+            ) : (
+              <svg className="h-4 w-4 flex-none text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                <circle cx="11" cy="11" r="7" strokeWidth="1.75" />
+                <path d="M21 21l-4.35-4.35" strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
+            )}
+            <input
+              ref={inputRef}
+              type="search"
+              inputMode="search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="flex-1 bg-transparent text-base text-slate-900 placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => { setQuery(""); setFetchError(null); inputRef.current?.focus(); }}
+                aria-label="Clear search"
+                className="text-slate-500 transition-colors hover:text-slate-800"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                  <path d="M18 6L6 18M6 6l12 12" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {/* Cancel — closes drawer and goes home */}
+          <Link
+            href="/"
+            onClick={onClose}
+            className="flex-none text-sm font-medium text-blue-500 transition-colors hover:text-blue-700 active:text-blue-800 px-1"
+          >
+            Cancel
+          </Link>
         </div>
-      </div>
+      ) : (
+        /* ── Desktop: original search bar with GPS button ── */
+        <div className="sticky top-0 z-20 flex items-center gap-2 border-t border-b border-lime-200 bg-lime-100 px-3 py-2">
+          <button
+            type="button"
+            onClick={onRequestGps}
+            disabled={gpsLoading || disabled}
+            aria-label="Use current location"
+            title="Use current location"
+            className={cn(
+              "flex h-8 w-8 flex-none items-center justify-center rounded-lg transition-colors disabled:opacity-50",
+              gpsPermissionDenied ? "text-red-500 hover:bg-red-50" : gpsError ? "text-red-400 hover:bg-slate-100" : "text-slate-500 hover:bg-slate-100"
+            )}
+          >
+            {gpsLoading ? (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <IconCrosshair className="h-4 w-4" />
+            )}
+          </button>
 
-      {/* Error messages — shown below the combined row */}
+          <div className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-slate-200 px-3 py-1.5">
+            {loading ? (
+              <svg className="h-4 w-4 flex-none animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4 flex-none text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                <circle cx="11" cy="11" r="7" strokeWidth="1.75" />
+                <path d="M21 21l-4.35-4.35" strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
+            )}
+            <input
+              ref={inputRef}
+              type="search"
+              inputMode="search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="flex-1 bg-transparent text-base text-slate-900 placeholder:text-slate-700 outline-none disabled:cursor-not-allowed"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => { setQuery(""); setFetchError(null); inputRef.current?.focus(); }}
+                aria-label="Clear search"
+                className="text-slate-500 transition-colors hover:text-slate-800"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                  <path d="M18 6L6 18M6 6l12 12" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {gpsError && <p className="px-4 pt-1.5 pb-0 text-xs text-red-400">{gpsError}</p>}
       {fetchError && <p className="px-4 pt-1.5 pb-0 text-xs text-red-400">{fetchError}</p>}
 
-      {/* Main scrollable area — results when typing, grouped list otherwise */}
+      {/* Scrollable list */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500">
+
+        {/* ── Mobile: Current Location row at top of list ── */}
+        {isMobile && (
+          <button
+            type="button"
+            onClick={onRequestGps}
+            disabled={gpsLoading || disabled}
+            className={cn(
+              "flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors hover:bg-blue-50 disabled:opacity-50",
+              gpsPermissionDenied ? "text-red-500" : "text-blue-500"
+            )}
+          >
+            <span className={cn(
+              "flex h-8 w-8 flex-none items-center justify-center rounded-full",
+              gpsPermissionDenied ? "bg-red-50" : "bg-blue-50"
+            )}>
+              {gpsLoading ? (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                  <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <IconCrosshair className="h-4 w-4" />
+              )}
+            </span>
+            <span className="text-base font-medium">
+              {gpsLoading ? "Getting location…" : gpsPermissionDenied ? "Location access blocked" : "Current Location"}
+            </span>
+          </button>
+        )}
+
         {isTyping ? (
           results.length === 0 && !loading ? (
             <p className="px-4 py-10 text-center text-sm text-slate-400">
@@ -455,14 +514,20 @@ function PanelContent({
             <div role="list" aria-label="Search results">
               {results.map((s) => (
                 <div key={`${s.label}-${s.sublabel}`} role="listitem">
-                  <LocationRow suggestion={s} onSelect={() => onSelect(s)} />
+                  <LocationRow
+                    suggestion={s}
+                    onSelect={() => onSelect(s)}
+                    onSave={() => onToggleSave(s)}
+                    isSaved={isSavedFn(s)}
+                    isSaving={savingKey === savingKeyFor(s)}
+                  />
                 </div>
               ))}
             </div>
           )
         ) : (
           <div>
-            {/* ── Toggle bar ── */}
+            {/* Toggle bar */}
             <div className="flex items-center justify-between px-4 pt-2 pb-1">
               <button
                 type="button"
@@ -475,13 +540,7 @@ function PanelContent({
                     : "border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600"
                 )}
               >
-                <svg
-                  className="h-3 w-3"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  fill={savedOnly ? "currentColor" : "none"}
-                  aria-hidden
-                >
+                <svg className="h-3 w-3" viewBox="0 0 24 24" stroke="currentColor" fill={savedOnly ? "currentColor" : "none"} aria-hidden>
                   <path d="M5 3h14a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" strokeWidth="1.75" strokeLinejoin="round" />
                 </svg>
                 Saved
@@ -497,7 +556,7 @@ function PanelContent({
               )}
             </div>
 
-            {/* ── Recent (hidden when savedOnly) ── */}
+            {/* Recent */}
             {!savedOnly && (
               recentItems.length === 0 ? (
                 <p className="px-4 py-3 text-xs text-slate-400">No recent searches</p>
@@ -508,8 +567,9 @@ function PanelContent({
                       <LocationRow
                         suggestion={s}
                         onSelect={() => onSelect(s)}
-                        onSave={() => onSaveRecent(i)}
-                        isSaved={savedItems.some((sv) => sv.label === s.label)}
+                        onSave={() => onToggleSave(s)}
+                        isSaved={isSavedFn(s)}
+                        isSaving={savingKey === savingKeyFor(s)}
                         onClear={() => onClearRecent(i)}
                       />
                     </div>
@@ -518,20 +578,18 @@ function PanelContent({
               )
             )}
 
-            {/* ── Saved ── */}
-            {!savedOnly && (
-              <div className="mt-1 border-t border-slate-100" />
-            )}
+            {/* Saved from DB */}
+            {!savedOnly && <div className="mt-1 border-t border-slate-100" />}
             {savedItems.length === 0 ? (
               <p className="px-4 py-3 text-xs text-slate-400">No saved locations</p>
             ) : (
               <div role="list">
-                {savedItems.map((s, i) => (
-                  <div key={`sv-${i}-${s.label}`} role="listitem">
+                {savedItems.map((s) => (
+                  <div key={s.id} role="listitem">
                     <LocationRow
                       suggestion={s}
                       onSelect={() => onSelect(s)}
-                      onClear={() => setConfirmSavedIndex(i)}
+                      onClear={() => setConfirmDeleteId(s.id)}
                       isSaved
                     />
                   </div>
@@ -542,24 +600,29 @@ function PanelContent({
         )}
       </div>
 
-      {/* Confirm dialog — remove saved location */}
+      {/* Confirm delete dialog */}
       <Dialog
-        open={confirmSavedIndex !== null}
-        onOpenChange={(open) => { if (!open) setConfirmSavedIndex(null); }}
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}
       >
         <DialogContent className="max-w-xs">
           <DialogHeader>
             <DialogTitle>Remove saved location?</DialogTitle>
             <DialogClose asChild>
               <button type="button" className="ml-auto flex h-7 w-7 items-center justify-center rounded-full bg-slate-300 text-slate-500 transition-colors hover:bg-slate-400/50 hover:text-slate-700" aria-label="Close">
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M18 6 6 18M6 6l12 12" /></svg>
               </button>
             </DialogClose>
           </DialogHeader>
           <div className="flex flex-col gap-2 px-5 pt-4 pb-4">
             <p className="text-sm leading-relaxed text-slate-500">
-              {confirmSavedIndex !== null && savedItems[confirmSavedIndex] ? (
-                <><span className="font-medium text-slate-700">&ldquo;{savedItems[confirmSavedIndex].label}&rdquo;</span> will be removed from your saved locations.</>
+              {confirmDeleteId !== null && savedItems.find((s) => s.id === confirmDeleteId) ? (
+                <>
+                  <span className="font-medium text-slate-700">
+                    &ldquo;{savedItems.find((s) => s.id === confirmDeleteId)!.label}&rdquo;
+                  </span>{" "}
+                  will be removed from your saved locations.
+                </>
               ) : (
                 "This location will be removed from your saved locations."
               )}
@@ -567,20 +630,16 @@ function PanelContent({
           </div>
           <div className="flex justify-end gap-2 px-5 pb-5">
             <DialogClose asChild>
-              <button
-                type="button"
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
-              >
+              <button type="button" className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
                 Cancel
               </button>
             </DialogClose>
-
             <button
               type="button"
               onClick={() => {
-                if (confirmSavedIndex !== null) {
-                  onClearSaved(confirmSavedIndex);
-                  setConfirmSavedIndex(null);
+                if (confirmDeleteId) {
+                  onDeleteSaved(confirmDeleteId);
+                  setConfirmDeleteId(null);
                 }
               }}
               className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
@@ -590,43 +649,59 @@ function PanelContent({
           </div>
         </DialogContent>
       </Dialog>
-      {/* Radius footer */}
-      {showRadius && (
-        <div className="border-t border-slate-200 bg-white px-4 py-3">
-         <p className="mb-2 truncate text-sm font-medium text-slate-700">
-  {current
-    ? buildPillText(current.label, current.sublabel)
-    : "Select location"}
-</p>
 
-          <ToggleButtonGroup
-            singleSelect
-            requireSelection
-            value={current?.radius != null ? [String(current.radius)] : []}
-            onChange={(vals) => {
-              if (!vals[0]) return;
-              onRadiusChange(parseFloat(vals[0]));
-            }}
-          >
-            {RADIUS_OPTIONS.map((r) => (
-              <ToggleGroupButton
-                key={r}
-                value={String(r)}
-                size="default"
-                disabled={!current}
-              >
-                {r} {radiusUnit}
-              </ToggleGroupButton>
-            ))}
-          </ToggleButtonGroup>
-        </div>
-      )}
-      
+     {/* Radius footer */}
+{showRadius && (
+  <div className="border-t border-slate-200 bg-white px-4 py-3">
+    <p className="mb-2 truncate text-sm font-medium text-slate-700">
+      {current ? buildPillText(current.label, current.sublabel) : "Select location"}
+    </p>
+    {isMobile ? (
+      <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {RADIUS_OPTIONS.map((r) => {
+          const isSelected = current?.radius === r;
+          return (
+            <button
+              key={r}
+              type="button"
+              disabled={!current}
+              onClick={() => onRadiusChange(r)}
+              className={cn(
+                "flex-none rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
+                isSelected
+                  ? "border-slate-800 bg-slate-800 text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800"
+              )}
+            >
+              {r} {radiusUnit}
+            </button>
+          );
+        })}
+      </div>
+    ) : (
+      <ToggleButtonGroup
+        singleSelect
+        requireSelection
+        value={current?.radius != null ? [String(current.radius)] : []}
+        onChange={(vals) => {
+          if (!vals[0]) return;
+          onRadiusChange(parseFloat(vals[0]));
+        }}
+      >
+        {RADIUS_OPTIONS.map((r) => (
+          <ToggleGroupButton key={r} value={String(r)} size="default" disabled={!current}>
+            {r} {radiusUnit}
+          </ToggleGroupButton>
+        ))}
+      </ToggleButtonGroup>
+    )}
+  </div>
+)}
     </div>
   );
 }
 
-// ─── Pill helpers ───────────────────────────────────────────────────────────────
+// ─── Pill helpers ─────────────────────────────────────────────────────────────
 
 const SCOPE_LABELS: Record<string, string> = {
   UK: "United Kingdom", SG: "Singapore", IN: "India",
@@ -641,7 +716,7 @@ function buildPillText(label: string, sublabel?: string): string {
   return `${label}, ${stripped}`;
 }
 
-// ─── Main component ────────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function LocationPicker({
   value,
@@ -664,16 +739,64 @@ export function LocationPicker({
   const [gpsError, setGpsError] = React.useState<string | null>(null);
   const [gpsPermissionDenied, setGpsPermissionDenied] = React.useState(false);
 
-  const [recentItems, setRecentItems] = React.useState<SearchSuggestion[]>(() =>
-    countryScope?.length
-      ? ALL_RECENT.filter((s) => matchesScope(s.sublabel, countryScope))
-      : ALL_RECENT
-  );
-  const [savedItems, setSavedItems] = React.useState<SearchSuggestion[]>(() =>
-    countryScope?.length
-      ? ALL_SAVED.filter((s) => matchesScope(s.sublabel, countryScope))
-      : ALL_SAVED
-  );
+  // ─── Recents — localStorage ───────────────────────────────────────────────
+  const [recentItems, setRecentItems] = React.useState<SearchSuggestion[]>(() => {
+    try {
+      const stored = localStorage.getItem("location-recents");
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem("location-recents", JSON.stringify(recentItems));
+  }, [recentItems]);
+
+  // ─── Saved — SQLite database via API ─────────────────────────────────────
+  const [savedItems, setSavedItems] = React.useState<DbSavedLocation[]>([]);
+  const [savedLoading, setSavedLoading] = React.useState(false);
+  const [savingKey, setSavingKey] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setSavedLoading(true);
+    fetch("/api/saved-locations")
+      .then((r) => r.json())
+      .then((data: DbSavedLocation[]) => setSavedItems(data))
+      .catch(() => {})
+      .finally(() => setSavedLoading(false));
+  }, []);
+
+  async function toggleSave(s: SearchSuggestion) {
+    const key = `${s.label}||${s.sublabel ?? ""}`;
+    const existing = savedItems.find(
+      (sv) => sv.label === s.label && sv.sublabel === s.sublabel
+    );
+    setSavingKey(key);
+    try {
+      if (existing) {
+        await fetch(`/api/saved-locations/${existing.id}`, { method: "DELETE" });
+        setSavedItems((prev) => prev.filter((sv) => sv.id !== existing.id));
+      } else {
+        const res = await fetch("/api/saved-locations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(s),
+        });
+        const created: DbSavedLocation = await res.json();
+        setSavedItems((prev) => [created, ...prev]);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  async function deleteSaved(id: string) {
+    try {
+      await fetch(`/api/saved-locations/${id}`, { method: "DELETE" });
+      setSavedItems((prev) => prev.filter((sv) => sv.id !== id));
+    } catch {}
+  }
 
   React.useEffect(() => { setMounted(true); }, []);
 
@@ -684,7 +807,16 @@ export function LocationPicker({
     onChange?.(v);
   }
 
-  // ─── GPS with reverse geocoding ───────────────────────────────────────────
+  function pushRecent(s: SearchSuggestion) {
+    setRecentItems((prev) => {
+      const filtered = prev.filter(
+        (r) => !(r.label === s.label && r.sublabel === s.sublabel)
+      );
+      return [s, ...filtered].slice(0, 8);
+    });
+  }
+
+  // ─── GPS ─────────────────────────────────────────────────────────────────
   async function requestGps() {
     if (!navigator.geolocation) {
       setGpsError("Geolocation is not supported by your browser");
@@ -697,10 +829,7 @@ export function LocationPicker({
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
-
-        // Reverse geocode to get actual address label
         const { label, sublabel } = await reverseGeocode(lat, lng);
-
         setGpsLoading(false);
         emit({
           label,
@@ -711,6 +840,7 @@ export function LocationPicker({
           unit: current?.unit ?? radiusUnit,
         });
         setOpen(false);
+        pushRecent({ label, sublabel, lat, lng });
       },
       (err) => {
         setGpsLoading(false);
@@ -741,56 +871,46 @@ export function LocationPicker({
       ? `±${current.radius} ${current.unit ?? radiusUnit}`
       : null;
 
-  const panel = (
-    <PanelContent
-      current={current}
-      showRadius={showRadius}
-      radiusUnit={radiusUnit}
-      countryScope={countryScope}
-      searchProvider={searchProvider}
-      placeholder={placeholder}
-      disabled={disabled}
-      gpsLoading={gpsLoading}
-      gpsError={gpsError}
-      gpsPermissionDenied={gpsPermissionDenied}
-      recentItems={recentItems}
-      savedItems={savedItems}
-      onClearRecent={(i) => setRecentItems((prev) => prev.filter((_, idx) => idx !== i))}
-      onSaveRecent={(i) => {
-        const item = recentItems[i];
-        if (!item) return;
-        const alreadySaved = savedItems.some((sv) => sv.label === item.label);
-        if (alreadySaved) {
-          setSavedItems((prev) => prev.filter((sv) => sv.label !== item.label));
-        } else {
-          setSavedItems((prev) => [item, ...prev]);
-        }
-      }}
-      onClearSaved={(i) => setSavedItems((prev) => prev.filter((_, idx) => idx !== i))}
-      onRequestGps={requestGps}
-      onSelect={(s) => {
-        emit({
-          ...s,
-          radius: current?.radius ?? (showRadius ? RADIUS_OPTIONS[0] : undefined),
-          unit: current?.unit ?? radiusUnit,
-        });
-        setOpen(false);
-      }}
-      onRadiusChange={(r) => {
-        if (current) emit({ ...current, radius: r, unit: radiusUnit });
-      }}
-    />
-  );
+  const panelProps = {
+    current,
+    showRadius,
+    radiusUnit,
+    countryScope,
+    searchProvider,
+    placeholder,
+    disabled,
+    gpsLoading,
+    gpsError,
+    gpsPermissionDenied,
+    recentItems,
+    savedItems,
+    savingKey,
+    onClearRecent: (i: number) => setRecentItems((prev) => prev.filter((_, idx) => idx !== i)),
+    onToggleSave: toggleSave,
+    onDeleteSaved: deleteSaved,
+    onRequestGps: requestGps,
+    onSelect: (s: SearchSuggestion) => {
+      emit({
+        ...s,
+        radius: current?.radius ?? (showRadius ? RADIUS_OPTIONS[0] : undefined),
+        unit: current?.unit ?? radiusUnit,
+      });
+      pushRecent(s);
+      setOpen(false);
+    },
+    onRadiusChange: (r: number) => {
+      if (current) emit({ ...current, radius: r, unit: radiusUnit });
+    },
+  };
 
   return (
     <div className={cn("flex items-center", className)}>
 
-      {/* Split pill — GPS (left) + Location (right) joined as one unit */}
+      {/* Split pill */}
       <div className={cn(
         "flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-sm shadow-md overflow-hidden",
         disabled && "opacity-50 cursor-not-allowed"
       )}>
-
         {/* GPS half */}
         <button
           type="button"
@@ -813,10 +933,9 @@ export function LocationPicker({
           )}
         </button>
 
-        {/* Divider */}
         <span className="h-4 w-px bg-white/20 flex-none" aria-hidden />
 
-        {/* Location picker half */}
+        {/* Location half */}
         <button
           type="button"
           onClick={() => !disabled && setOpen(true)}
@@ -824,7 +943,6 @@ export function LocationPicker({
           aria-haspopup="dialog"
           className="flex h-8 min-w-0 items-center gap-2 px-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed"
         >
-          {/*<IconPin className="h-3.5 w-3.5 flex-none text-white/60" /> */}
           <span className="truncate" title={pillTitle}>{pillLabel}</span>
           {pillRadius && (
             <>
@@ -834,12 +952,12 @@ export function LocationPicker({
           )}
           <IconChevron className={cn("h-3.5 w-3.5 flex-none text-white/40 transition-transform", open && "rotate-180")} />
         </button>
-
       </div>
 
-      {/* Responsive overlay — avoids SSR hydration mismatch */}
+      {/* Responsive overlay */}
       {mounted && (
         isTablet ? (
+          /* ── Desktop: unchanged ── */
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="flex max-h-[min(80vh,600px)] flex-col overflow-hidden max-w-sm p-0">
               <div className="relative flex items-center justify-center rounded-t-2xl bg-linear-to-b from-slate-100 to-white px-4 py-2.5 border-b border-slate-200/60">
@@ -852,55 +970,46 @@ export function LocationPicker({
                   </button>
                 </DialogClose>
               </div>
-              {panel}
+              {savedLoading ? (
+                <div className="flex flex-1 items-center justify-center py-10">
+                  <svg className="h-5 w-5 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+                  </svg>
+                </div>
+              ) : <PanelContent {...panelProps} isMobile={false} />}
             </DialogContent>
           </Dialog>
         ) : (
-<Drawer open={open} onOpenChange={setOpen}>
-  <DrawerContent
-    className="h-dvh w-full overflow-hidden rounded-none"
-    style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-  >
-    <div className="relative flex items-center justify-center border-b border-slate-200 bg-linear-to-b from-slate-100 to-white px-4 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.10)]">
-      
-      <DrawerTitle className="text-[15px] font-semibold tracking-tight text-slate-800">
-        Set Location
-      </DrawerTitle>
-
-      <DrawerClose asChild>
-        <button
-          type="button"
-          aria-label="Close"
-          className="absolute right-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-lg shadow-black/20 transition-all hover:scale-105 hover:bg-slate-100 hover:text-slate-800"
-        >
-          <svg
-            className="h-4.5 w-4.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            aria-hidden
-          >
-            <path
-              d="M18 6L6 18M6 6l12 12"
-              strokeWidth="2.75"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </DrawerClose>
-    </div>
-
-    {panel}
-  </DrawerContent>
-</Drawer>
+          /* ── Mobile: no header, search+cancel at top, GPS in list ── */
+          <Drawer open={open} onOpenChange={setOpen}>
+            <DrawerContent
+              className="h-dvh w-full overflow-hidden rounded-none"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              {/* Hidden title for accessibility */}
+              <DrawerTitle className="sr-only">Set Location</DrawerTitle>
+              {savedLoading ? (
+                <div className="flex flex-1 items-center justify-center py-10">
+                  <svg className="h-5 w-5 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+                  </svg>
+                </div>
+              ) : (
+                <PanelContent
+                  {...panelProps}
+                  isMobile={true}
+                  onClose={() => setOpen(false)}
+                />
+              )}
+            </DrawerContent>
+          </Drawer>
         )
       )}
 
-      {/* Location permission denied dialog */}
+      {/* GPS permission denied dialog */}
       {mounted && (
         <Dialog open={gpsPermissionDenied} onOpenChange={(o) => { if (!o) setGpsPermissionDenied(false); }}>
           <DialogContent className="max-w-xs p-0 overflow-hidden border-none">
-            {/* Warning hero band */}
             <div className="flex flex-col items-center gap-2 bg-red-500 px-6 pt-6 pb-5">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/25">
                 <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
@@ -915,8 +1024,6 @@ export function LocationPicker({
                 Allow access in your browser settings to use your current location.
               </p>
             </div>
-
-            {/* Steps */}
             <div className="px-5 py-4">
               <ol className="flex flex-col gap-2.5">
                 <li className="flex items-start gap-2.5">
@@ -933,14 +1040,9 @@ export function LocationPicker({
                 </li>
               </ol>
             </div>
-
-            {/* Footer */}
             <div className="px-5 pb-5 pt-0">
               <DialogClose asChild>
-                <button
-                  type="button"
-                  className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
-                >
+                <button type="button" className="w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-700">
                   Got it
                 </button>
               </DialogClose>
