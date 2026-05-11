@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
@@ -350,9 +349,35 @@ function PanelContent({
   return (
     <div className="flex flex-col flex-1 min-h-0">
 
-      {/* ── Mobile: search bar + Cancel in header row ── */}
+      {/* ── Mobile: GPS button + search bar + Cancel ── */}
       {isMobile ? (
         <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-2.5">
+          {/* GPS button — sized to match search bar height */}
+          <button
+            type="button"
+            onClick={onRequestGps}
+            disabled={gpsLoading || disabled}
+            aria-label="Use current location"
+            title={gpsPermissionDenied ? "Location access blocked" : gpsError ?? "Use current location"}
+            className={cn(
+              "flex flex-none items-center justify-center rounded-full border transition-colors disabled:opacity-50",
+              "h-[40px] w-[40px]",
+              gpsPermissionDenied
+                ? "border-red-200 bg-red-50 text-red-500"
+                : gpsError
+                ? "border-slate-200 bg-slate-100 text-red-400"
+                : "border-slate-300 bg-slate-100 text-blue-500 hover:bg-blue-50 hover:border-blue-300"
+            )}
+          >
+            {gpsLoading ? (
+              <svg className="h-[18px] w-[18px] animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <IconCrosshair className="h-[18px] w-[18px]" />
+            )}
+          </button>
+
           <div className="flex flex-1 items-center gap-2 rounded-full border border-slate-300 bg-slate-100 px-3 py-2">
             {loading ? (
               <svg className="h-4 w-4 flex-none animate-spin text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
@@ -391,14 +416,14 @@ function PanelContent({
               </button>
             )}
           </div>
-          {/* Cancel — closes drawer and goes home */}
-          <Link
-            href="/"
+          {/* Cancel — closes drawer */}
+          <button
+            type="button"
             onClick={onClose}
-            className="flex-none text-sm font-medium text-blue-500 transition-colors hover:text-blue-700 active:text-blue-800 px-1"
+            className="flex-none text-sm font-medium text-blue-500 transition-colors hover:text-blue-700 active:text-blue-800 px-1 whitespace-nowrap"
           >
             Cancel
-          </Link>
+          </button>
         </div>
       ) : (
         /* ── Desktop: original search bar with GPS button ── */
@@ -470,35 +495,6 @@ function PanelContent({
       {/* Scrollable list */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500">
 
-        {/* ── Mobile: Current Location row at top of list ── */}
-        {isMobile && (
-          <button
-            type="button"
-            onClick={onRequestGps}
-            disabled={gpsLoading || disabled}
-            className={cn(
-              "flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors hover:bg-blue-50 disabled:opacity-50",
-              gpsPermissionDenied ? "text-red-500" : "text-blue-500"
-            )}
-          >
-            <span className={cn(
-              "flex h-8 w-8 flex-none items-center justify-center rounded-full",
-              gpsPermissionDenied ? "bg-red-50" : "bg-blue-50"
-            )}>
-              {gpsLoading ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                  <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <IconCrosshair className="h-4 w-4" />
-              )}
-            </span>
-            <span className="text-base font-medium">
-              {gpsLoading ? "Getting location…" : gpsPermissionDenied ? "Location access blocked" : "Current Location"}
-            </span>
-          </button>
-        )}
-
         {isTyping ? (
           results.length === 0 && !loading ? (
             <p className="px-4 py-10 text-center text-sm text-slate-400">
@@ -527,8 +523,32 @@ function PanelContent({
           )
         ) : (
           <div>
-            {/* Toggle bar */}
-            <div className="flex items-center justify-between px-4 pt-2 pb-1">
+            {/* Recent */}
+            {!savedOnly && (
+              <>
+                {recentItems.length === 0 ? (
+                  <p className="px-4 pt-3 pb-1 text-xs text-slate-400">No recent searches</p>
+                ) : (
+                  <div role="list">
+                    {recentItems.map((s, i) => (
+                      <div key={`r-${i}-${s.label}`} role="listitem">
+                        <LocationRow
+                          suggestion={s}
+                          onSelect={() => onSelect(s)}
+                          onSave={() => onToggleSave(s)}
+                          isSaved={isSavedFn(s)}
+                          isSaving={savingKey === savingKeyFor(s)}
+                          onClear={() => onClearRecent(i)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Saved toggle + Clear all — inline row below recent items */}
+            <div className="flex items-center justify-between px-4 py-2">
               <button
                 type="button"
                 onClick={() => setSavedOnly((v) => !v)}
@@ -555,28 +575,6 @@ function PanelContent({
                 </button>
               )}
             </div>
-
-            {/* Recent */}
-            {!savedOnly && (
-              recentItems.length === 0 ? (
-                <p className="px-4 py-3 text-xs text-slate-400">No recent searches</p>
-              ) : (
-                <div role="list">
-                  {recentItems.map((s, i) => (
-                    <div key={`r-${i}-${s.label}`} role="listitem">
-                      <LocationRow
-                        suggestion={s}
-                        onSelect={() => onSelect(s)}
-                        onSave={() => onToggleSave(s)}
-                        isSaved={isSavedFn(s)}
-                        isSaving={savingKey === savingKeyFor(s)}
-                        onClear={() => onClearRecent(i)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )
-            )}
 
             {/* Saved from DB */}
             {!savedOnly && <div className="mt-1 border-t border-slate-100" />}
@@ -980,7 +978,7 @@ export function LocationPicker({
             </DialogContent>
           </Dialog>
         ) : (
-          /* ── Mobile: no header, search+cancel at top, GPS in list ── */
+          /* ── Mobile: no header, GPS+search+cancel at top, no GPS in list ── */
           <Drawer open={open} onOpenChange={setOpen}>
             <DrawerContent
               className="h-dvh w-full overflow-hidden rounded-none"
@@ -1024,7 +1022,7 @@ export function LocationPicker({
                 Allow access in your browser settings to use your current location.
               </p>
             </div>
-            <div className="px-5 py-4">
+            <div className="px-5 py-3">
               <ol className="flex flex-col gap-2.5">
                 <li className="flex items-start gap-2.5">
                   <span className="flex h-4.5 w-4.5 flex-none items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-700 mt-px">1</span>
