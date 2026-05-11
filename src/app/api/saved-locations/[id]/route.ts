@@ -3,8 +3,9 @@ import db from "@/lib/db";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  db.prepare("DELETE FROM saved_locations WHERE id = ?").run(params.id);
+  const { id } = await params;
+  db.prepare("DELETE FROM saved_locations WHERE id = ?").run(id);
   return NextResponse.json({ success: true });
 }
