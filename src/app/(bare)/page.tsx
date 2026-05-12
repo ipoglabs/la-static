@@ -11,7 +11,7 @@ const categories = [
   {
     title: 'Property 1',
     desc: 'Find your perfect home, rental or commercial space.',
-    icon: '/assets/icons/categories/property2.png',
+    icon: '/assets/icons/categories/property.png',
     bg: 'bg-amber-100',
     items: ['To Rent','To Buy','Room Rental','For Students','Commercial','Holiday Rental','Land for Sale/Lease','Wanted List'],
   },
@@ -150,7 +150,7 @@ export default function HomePage() {
               className="flex-none mr-1 w-22 h-22 object-contain border-2 border-red-600 rounded-xl p-1"
              />
               {/* Title & desc */}
-              <div className="relative z-10 flex-1 pr-2">
+              <div className="relative z-10 flex-1 pr-10">
                 <h2 className="text-xl font-bold text-slate-700">
                   {cat.title}
                 </h2>
