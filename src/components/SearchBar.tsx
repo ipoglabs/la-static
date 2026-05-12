@@ -14,10 +14,10 @@ export default function SearchBar() {
   const scopeCode = country ? (SCOPE_CODE_MAP[country] ?? country) : null;
 
   return (
-    <div className="bg-slate-800 pt-4 pb-8 shadow-gray-200 shadow-lg w-full">
+    <div className="bg-slate-800 pt-4 pb-4 shadow-gray-200 shadow-lg w-full">
 
       {/* TITLE */}
-      <div className="container max-w-screen-sm mx-auto px-4 text-center pb-4">
+      <div className="container max-w-screen-sm mx-auto px-4 text-center pb-1">
         <h1 className="text-white text-2xl sm:text-4xl leading-tight font-bold mb-3">
           You can find anything with lokalads, just start...
         </h1>
@@ -25,7 +25,7 @@ export default function SearchBar() {
       </div>
 
       {/* SEARCH FORM */}
-      <form className="container mx-auto px-4 flex flex-col gap-2 max-w-screen-lg pb-1">
+      <form className="container mx-auto px-4 flex flex-col gap-2 max-w-screen-lg pb-0">
 
         {/* 🔍 KEYWORD */}
         <div className="relative w-full">
@@ -59,13 +59,38 @@ export default function SearchBar() {
           </button>
         </div>
 
-        {/* 📍 LOCATION */}
+        {/* 📍 LOCATION + 🔔 ALERT */}
         {scopeCode && (
-          <LocationPicker
-            countryScope={[scopeCode]}
-            onChange={setLocation}
-            searchProvider="google"
-          />
+          <div className="flex items-center justify-between gap-3">
+
+            <LocationPicker
+              countryScope={[scopeCode]}
+              onChange={setLocation}
+              searchProvider="google"
+            />
+
+            <a
+              href="#"
+              className="group flex flex-none items-center gap-1.5 text-slate-300 hover:text-white transition-colors text-sm font-semibold"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-5 rotate-12 transition-colors group-hover:text-rose-400"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5"
+                />
+              </svg>
+              <span className="hidden sm:inline">Create Alert</span>
+            </a>
+
+          </div>
         )}
 
       </form>
