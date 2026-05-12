@@ -11,7 +11,7 @@ const categories = [
   {
     title: 'Property 1',
     desc: 'Find your perfect home, rental or commercial space.',
-    icon: '/assets/icons/property.png',
+    icon: '/assets/icons/categories/property.png',
     bg: 'bg-amber-100',
     items: ['To Rent','To Buy','Room Rental','For Students','Commercial','Holiday Rental','Land for Sale/Lease','Wanted List'],
   },

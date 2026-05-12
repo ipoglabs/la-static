@@ -46,6 +46,13 @@ type DbSavedLocation = SearchSuggestion & { id: string };
 
 const RADIUS_OPTIONS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
+// ─── Scope labels ─────────────────────────────────────────────────────────────
+
+const SCOPE_LABELS: Record<string, string> = {
+  UK: "United Kingdom", SG: "Singapore", IN: "India",
+  US: "United States", AU: "Australia", AE: "UAE", CA: "Canada",
+};
+
 // ─── Reverse geocode helper ───────────────────────────────────────────────────
 
 async function reverseGeocode(
@@ -117,6 +124,118 @@ async function reverseGeocode(
   return { label: "Nearby Location", sublabel: undefined };
 }
 
+// ─── Check if sublabel matches country scope ──────────────────────────────────
+
+function isWithinScope(sublabel: string | undefined, countryScope: string[]): boolean {
+  if (!countryScope.length) return true;
+  if (!sublabel) return false;
+  return countryScope.some((code) => {
+    const fullName = SCOPE_LABELS[code] ?? code;
+    return (
+      sublabel.toLowerCase().includes(fullName.toLowerCase()) ||
+      sublabel.toLowerCase().includes(code.toLowerCase())
+    );
+  });
+}
+
+// ─── iOS-style Out-of-Scope Alert ─────────────────────────────────────────────
+
+function OutOfScopeAlert({
+  open,
+  onClose,
+  countryScope,
+  inline = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  countryScope: string[];
+  inline?: boolean;
+}) {
+  const scopeName =
+    countryScope.length === 1
+      ? (SCOPE_LABELS[countryScope[0]] ?? countryScope[0])
+      : countryScope.map((c) => SCOPE_LABELS[c] ?? c).join(" or ");
+
+  const APP_NAMES: Record<string, string> = {
+    UK: "Rightmove", US: "Zillow", AU: "Domain", IN: "Lokalads",
+  };
+  const appName =
+    countryScope.length === 1 ? (APP_NAMES[countryScope[0]] ?? "This app") : "This app";
+
+  const scopeLabel =
+    countryScope.length === 1
+      ? (SCOPE_LABELS[countryScope[0]] ?? countryScope[0])
+      : "supported region";
+
+  if (!open) return null;
+
+  // ── Inline variant: centred card inside the scrollable list area ──
+  if (inline) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-[270px] overflow-hidden rounded-2xl bg-[#f2f2f7] shadow-lg">
+          <div className="px-4 pb-5 pt-5 text-center">
+            <p className="text-[17px] font-semibold leading-snug text-[#1c1c1e]">
+              Location outside {scopeLabel}
+            </p>
+            <p className="mt-1 text-[13px] leading-[1.4] text-[#1c1c1e]">
+              Sorry, {appName} only supports location searches within the {scopeName}
+            </p>
+          </div>
+          <div className="h-px bg-[#3c3c43]/20" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-[11px] text-center text-[17px] font-normal text-[#007aff] transition-colors active:bg-[#e5e5ea]"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Full-screen overlay variant: used for GPS out-of-scope ──
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="mx-6 w-full max-w-[270px] overflow-hidden rounded-2xl bg-[#f2f2f7]/95 backdrop-blur-xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="out-of-scope-title"
+        aria-describedby="out-of-scope-desc"
+      >
+        <div className="px-4 pb-5 pt-5 text-center">
+          <p
+            id="out-of-scope-title"
+            className="text-[17px] font-semibold leading-snug text-[#1c1c1e]"
+          >
+            Location outside {scopeLabel}
+          </p>
+          <p
+            id="out-of-scope-desc"
+            className="mt-1 text-[13px] leading-[1.4] text-[#1c1c1e]"
+          >
+            Sorry, {appName} only supports location searches within the {scopeName}
+          </p>
+        </div>
+        <div className="h-px bg-[#3c3c43]/20" />
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full py-[11px] text-center text-[17px] font-normal text-[#007aff] transition-colors active:bg-[#e5e5ea]"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function IconCrosshair({ className }: { className?: string }) {
@@ -179,7 +298,6 @@ function LocationRow({
         </div>
       </button>
 
-      {/* Bookmark toggle — shown on recents and search results */}
       {onSave && (
         <button
           type="button"
@@ -195,11 +313,11 @@ function LocationRow({
           )}
         >
           {isSaving ? (
-            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
               <circle cx="12" cy="12" r="9" strokeWidth="2" strokeDasharray="28 56" strokeLinecap="round" />
             </svg>
           ) : (
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" stroke="currentColor" aria-hidden
+            <svg className="h-5 w-5" viewBox="0 0 24 24" stroke="currentColor" aria-hidden
               fill={isSaved ? "currentColor" : "none"}
             >
               <path d="M5 3h14a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" strokeWidth="1.75" strokeLinejoin="round" />
@@ -208,16 +326,14 @@ function LocationRow({
         </button>
       )}
 
-      {/* Static bookmark badge for saved list rows (no toggle, only delete) */}
       {isSaved && !onSave && (
         <span className="flex h-7 w-7 flex-none items-center justify-center text-blue-500" aria-label="Saved">
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" aria-hidden>
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" aria-hidden>
             <path d="M5 3h14a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
           </svg>
         </span>
       )}
 
-      {/* Remove / delete button */}
       {onClear && (
         <button
           type="button"
@@ -225,7 +341,7 @@ function LocationRow({
           aria-label={`Remove ${suggestion.label}`}
           className="mr-3 flex h-7 w-7 flex-none items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-800"
         >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
             <path d="M18 6L6 18M6 6l12 12" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
@@ -287,6 +403,7 @@ function PanelContent({
   const [results, setResults] = React.useState<SearchSuggestion[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
+  const [searchOutOfScope, setSearchOutOfScope] = React.useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
   const [savedOnly, setSavedOnly] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -308,14 +425,18 @@ function PanelContent({
       if (searchProvider === "google") {
         setLoading(true);
         setFetchError(null);
+        setSearchOutOfScope(false);
         try {
           const res = await fetch(`/api/places?input=${encodeURIComponent(q)}`);
           if (!res.ok) throw new Error("Places API error");
-          let suggestions: SearchSuggestion[] = await res.json();
+          const all: SearchSuggestion[] = await res.json();
           if (countryScope?.length) {
-            suggestions = suggestions.filter((s) => matchesScope(s.sublabel, countryScope));
+            const filtered = all.filter((s) => matchesScope(s.sublabel, countryScope));
+            setSearchOutOfScope(all.length > 0 && filtered.length === 0);
+            setResults(filtered);
+          } else {
+            setResults(all);
           }
-          setResults(suggestions);
         } catch {
           setFetchError("Couldn't fetch suggestions. Try again.");
           setResults([]);
@@ -324,15 +445,18 @@ function PanelContent({
         }
       } else {
         const lower = q.toLowerCase();
-        let filtered = STATIC_SUGGESTIONS.filter(
+        const all = STATIC_SUGGESTIONS.filter(
           (s) =>
             s.label.toLowerCase().includes(lower) ||
             (s.sublabel?.toLowerCase().includes(lower) ?? false)
         );
         if (countryScope?.length) {
-          filtered = filtered.filter((s) => matchesScope(s.sublabel, countryScope));
+          const filtered = all.filter((s) => matchesScope(s.sublabel, countryScope));
+          setSearchOutOfScope(all.length > 0 && filtered.length === 0);
+          setResults(filtered);
+        } else {
+          setResults(all);
         }
-        setResults(filtered);
         setFetchError(null);
       }
     }, searchProvider === "google" ? 350 : 0);
@@ -352,7 +476,6 @@ function PanelContent({
       {/* ── Mobile: GPS button + search bar + Cancel ── */}
       {isMobile ? (
         <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-2.5">
-          {/* GPS button — sized to match search bar height */}
           <button
             type="button"
             onClick={onRequestGps}
@@ -385,13 +508,13 @@ function PanelContent({
               </svg>
             ) : (
               <svg className="h-4 w-4 flex-none text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                <circle cx="11" cy="11" r="7" strokeWidth="1.75" />
+                <circle cx="10" cy="10" r="7" strokeWidth="1.75" />
                 <path d="M21 21l-4.35-4.35" strokeWidth="1.75" strokeLinecap="round" />
               </svg>
             )}
             <input
               ref={inputRef}
-              type="search"
+              type="text"
               inputMode="search"
               autoComplete="off"
               autoCorrect="off"
@@ -401,7 +524,7 @@ function PanelContent({
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
               disabled={disabled}
-              className="flex-1 bg-transparent text-base text-slate-900 placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent text-base font-semibold text-slate-900 placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
             />
             {query && (
               <button
@@ -416,7 +539,6 @@ function PanelContent({
               </button>
             )}
           </div>
-          {/* Cancel — closes drawer */}
           <button
             type="button"
             onClick={onClose}
@@ -461,7 +583,7 @@ function PanelContent({
             )}
             <input
               ref={inputRef}
-              type="search"
+              type="text"
               inputMode="search"
               autoComplete="off"
               autoCorrect="off"
@@ -497,15 +619,25 @@ function PanelContent({
 
         {isTyping ? (
           results.length === 0 && !loading ? (
-            <p className="px-4 py-10 text-center text-sm text-slate-400">
-              <span className="inline-flex items-center justify-center gap-2">
-                <svg className="h-4 w-4 flex-none text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" strokeWidth="1.5" />
-                  <path d="M2 12h20M12 2c2.5 2.5 3.5 5.5 3.5 10S14.5 19.5 12 22" strokeWidth="1" strokeLinecap="round" />
-                </svg>
-                No results for &ldquo;{query}&rdquo;
-              </span>
-            </p>
+            searchOutOfScope && countryScope?.length ? (
+              /* ── Scope mismatch: show iOS-style alert inline ── */
+              <OutOfScopeAlert
+                open={true}
+                inline
+                onClose={() => { setQuery(""); setSearchOutOfScope(false); inputRef.current?.focus(); }}
+                countryScope={countryScope}
+              />
+            ) : (
+              <p className="px-4 py-10 text-center text-sm text-slate-400">
+                <span className="inline-flex items-center justify-center gap-2">
+                  <svg className="h-4 w-4 flex-none text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
+                    <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" strokeWidth="1.5" />
+                    <path d="M2 12h20M12 2c2.5 2.5 3.5 5.5 3.5 10S14.5 19.5 12 22" strokeWidth="1" strokeLinecap="round" />
+                  </svg>
+                  No results for &ldquo;{query}&rdquo;
+                </span>
+              </p>
+            )
           ) : (
             <div role="list" aria-label="Search results">
               {results.map((s) => (
@@ -523,7 +655,6 @@ function PanelContent({
           )
         ) : (
           <div>
-            {/* Recent */}
             {!savedOnly && (
               <>
                 {recentItems.length === 0 ? (
@@ -547,7 +678,7 @@ function PanelContent({
               </>
             )}
 
-            {/* Saved toggle + Clear all — inline row below recent items */}
+            {/* ── Saved toggle + Clear all — hidden, uncomment to re-enable ──
             <div className="flex items-center justify-between px-4 py-2">
               <button
                 type="button"
@@ -575,8 +706,8 @@ function PanelContent({
                 </button>
               )}
             </div>
+            ── end hidden section ── */}
 
-            {/* Saved from DB */}
             {!savedOnly && <div className="mt-1 border-t border-slate-100" />}
             {savedItems.length === 0 ? (
               <p className="px-4 py-3 text-xs text-slate-400">No saved locations</p>
@@ -594,6 +725,17 @@ function PanelContent({
                 ))}
               </div>
             )}
+
+            {/* Cancel — closes the panel */}
+            <div className="border-t border-slate-100 px-4 py-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full text-center text-sm font-medium text-slate-400 transition-colors hover:text-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -648,63 +790,58 @@ function PanelContent({
         </DialogContent>
       </Dialog>
 
-     {/* Radius footer */}
-{showRadius && (
-  <div className="border-t border-slate-200 bg-white px-4 py-3">
-    <p className="mb-2 truncate text-sm font-medium text-slate-700">
-      {current ? buildPillText(current.label, current.sublabel) : "Select location"}
-    </p>
-    {isMobile ? (
-      <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {RADIUS_OPTIONS.map((r) => {
-          const isSelected = current?.radius === r;
-          return (
-            <button
-              key={r}
-              type="button"
-              disabled={!current}
-              onClick={() => onRadiusChange(r)}
-              className={cn(
-                "flex-none rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
-                isSelected
-                  ? "border-slate-800 bg-slate-800 text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800"
-              )}
+      {/* Radius footer */}
+      {showRadius && (
+        <div className="border-t border-slate-200 bg-white px-4 py-3">
+          <p className="mb-2 truncate text-sm font-medium text-slate-700">
+            {current ? buildPillText(current.label, current.sublabel) : "Select location"}
+          </p>
+          {isMobile ? (
+            <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {RADIUS_OPTIONS.map((r) => {
+                const isSelected = current?.radius === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    disabled={!current}
+                    onClick={() => onRadiusChange(r)}
+                    className={cn(
+                      "flex-none rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
+                      isSelected
+                        ? "border-slate-800 bg-slate-800 text-white"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800"
+                    )}
+                  >
+                    {r} {radiusUnit}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <ToggleButtonGroup
+              singleSelect
+              requireSelection
+              value={current?.radius != null ? [String(current.radius)] : []}
+              onChange={(vals) => {
+                if (!vals[0]) return;
+                onRadiusChange(parseFloat(vals[0]));
+              }}
             >
-              {r} {radiusUnit}
-            </button>
-          );
-        })}
-      </div>
-    ) : (
-      <ToggleButtonGroup
-        singleSelect
-        requireSelection
-        value={current?.radius != null ? [String(current.radius)] : []}
-        onChange={(vals) => {
-          if (!vals[0]) return;
-          onRadiusChange(parseFloat(vals[0]));
-        }}
-      >
-        {RADIUS_OPTIONS.map((r) => (
-          <ToggleGroupButton key={r} value={String(r)} size="default" disabled={!current}>
-            {r} {radiusUnit}
-          </ToggleGroupButton>
-        ))}
-      </ToggleButtonGroup>
-    )}
-  </div>
-)}
+              {RADIUS_OPTIONS.map((r) => (
+                <ToggleGroupButton key={r} value={String(r)} size="default" disabled={!current}>
+                  {r} {radiusUnit}
+                </ToggleGroupButton>
+              ))}
+            </ToggleButtonGroup>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Pill helpers ─────────────────────────────────────────────────────────────
-
-const SCOPE_LABELS: Record<string, string> = {
-  UK: "United Kingdom", SG: "Singapore", IN: "India",
-  US: "United States", AU: "Australia", AE: "UAE", CA: "Canada",
-};
 
 function buildPillText(label: string, sublabel?: string): string {
   if (!sublabel) return label;
@@ -736,6 +873,9 @@ export function LocationPicker({
   const [gpsLoading, setGpsLoading] = React.useState(false);
   const [gpsError, setGpsError] = React.useState<string | null>(null);
   const [gpsPermissionDenied, setGpsPermissionDenied] = React.useState(false);
+
+  // ── NEW: out-of-scope alert state ─────────────────────────────────────────
+  const [outOfScopeAlert, setOutOfScopeAlert] = React.useState(false);
 
   // ─── Recents — localStorage ───────────────────────────────────────────────
   const [recentItems, setRecentItems] = React.useState<SearchSuggestion[]>(() => {
@@ -829,6 +969,13 @@ export function LocationPicker({
         const { latitude: lat, longitude: lng } = pos.coords;
         const { label, sublabel } = await reverseGeocode(lat, lng);
         setGpsLoading(false);
+
+        // ── Scope check: show iOS-style alert if outside allowed region ──
+        if (countryScope?.length && !isWithinScope(sublabel, countryScope)) {
+          setOutOfScopeAlert(true);
+          return; // Do NOT emit or close the panel
+        }
+
         emit({
           label,
           sublabel,
@@ -955,7 +1102,6 @@ export function LocationPicker({
       {/* Responsive overlay */}
       {mounted && (
         isTablet ? (
-          /* ── Desktop: unchanged ── */
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="flex max-h-[min(80vh,600px)] flex-col overflow-hidden max-w-sm p-0">
               <div className="relative flex items-center justify-center rounded-t-2xl bg-linear-to-b from-slate-100 to-white px-4 py-2.5 border-b border-slate-200/60">
@@ -978,13 +1124,11 @@ export function LocationPicker({
             </DialogContent>
           </Dialog>
         ) : (
-          /* ── Mobile: no header, GPS+search+cancel at top, no GPS in list ── */
           <Drawer open={open} onOpenChange={setOpen}>
             <DrawerContent
               className="h-dvh w-full overflow-hidden rounded-none"
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
-              {/* Hidden title for accessibility */}
               <DrawerTitle className="sr-only">Set Location</DrawerTitle>
               {savedLoading ? (
                 <div className="flex flex-1 items-center justify-center py-10">
@@ -1002,6 +1146,15 @@ export function LocationPicker({
             </DrawerContent>
           </Drawer>
         )
+      )}
+
+      {/* ── iOS-style Out-of-Scope Alert ── */}
+      {mounted && countryScope?.length && (
+        <OutOfScopeAlert
+          open={outOfScopeAlert}
+          onClose={() => setOutOfScopeAlert(false)}
+          countryScope={countryScope}
+        />
       )}
 
       {/* GPS permission denied dialog */}
