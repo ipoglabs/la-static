@@ -144,12 +144,10 @@ function OutOfScopeAlert({
   open,
   onClose,
   countryScope,
-  inline = false,
 }: {
   open: boolean;
   onClose: () => void;
   countryScope: string[];
-  inline?: boolean;
 }) {
   const scopeName =
     countryScope.length === 1
@@ -169,33 +167,6 @@ function OutOfScopeAlert({
 
   if (!open) return null;
 
-  // ── Inline variant: centred card inside the scrollable list area ──
-  if (inline) {
-    return (
-      <div className="flex flex-1 items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[270px] overflow-hidden rounded-2xl bg-[#f2f2f7] shadow-lg">
-          <div className="px-4 pb-5 pt-5 text-center">
-            <p className="text-[17px] font-semibold leading-snug text-[#1c1c1e]">
-              Location outside {scopeLabel}
-            </p>
-            <p className="mt-1 text-[13px] leading-[1.4] text-[#1c1c1e]">
-              Sorry, {appName} only supports location searches within the {scopeName}
-            </p>
-          </div>
-          <div className="h-px bg-[#3c3c43]/20" />
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-[11px] text-center text-[17px] font-normal text-[#007aff] transition-colors active:bg-[#e5e5ea]"
-          >
-            OK
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Full-screen overlay variant: used for GPS out-of-scope ──
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40"
@@ -235,7 +206,7 @@ function OutOfScopeAlert({
     </div>
   );
 }
-
+ 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function IconCrosshair({ className }: { className?: string }) {
@@ -290,7 +261,7 @@ function LocationRow({
         className="flex flex-1 items-center gap-3 px-4 py-2 text-left transition-colors hover:bg-blue-50"
       >
         <IconPin className={cn("h-4 w-4 flex-none", isSaved ? "text-blue-500" : "text-slate-400")} />
-        <div className="min-w-0">
+        <div className="w-0 flex-1 overflow-hidden">
           <div className="truncate text-base font-normal text-slate-800">{suggestion.label}</div>
           {suggestion.sublabel && (
             <div className="truncate text-sm font-light text-slate-800">{suggestion.sublabel}</div>
@@ -611,34 +582,17 @@ function PanelContent({
         </div>
       )}
 
-      {gpsError && <p className="px-4 pt-1.5 pb-0 text-xs text-red-400">{gpsError}</p>}
       {fetchError && <p className="px-4 pt-1.5 pb-0 text-xs text-red-400">{fetchError}</p>}
 
       {/* Scrollable list */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-500">
 
         {isTyping ? (
-          results.length === 0 && !loading ? (
-            searchOutOfScope && countryScope?.length ? (
-              /* ── Scope mismatch: show iOS-style alert inline ── */
-              <OutOfScopeAlert
-                open={true}
-                inline
-                onClose={() => { setQuery(""); setSearchOutOfScope(false); inputRef.current?.focus(); }}
-                countryScope={countryScope}
-              />
-            ) : (
-              <p className="px-4 py-10 text-center text-sm text-slate-400">
-                <span className="inline-flex items-center justify-center gap-2">
-                  <svg className="h-4 w-4 flex-none text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-                    <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" strokeWidth="1.5" />
-                    <path d="M2 12h20M12 2c2.5 2.5 3.5 5.5 3.5 10S14.5 19.5 12 22" strokeWidth="1" strokeLinecap="round" />
-                  </svg>
-                  No results for &ldquo;{query}&rdquo;
-                </span>
-              </p>
-            )
-          ) : (
+      results.length === 0 && !loading ? (
+      <div className="px-4 py-2.5 text-sm text-slate-500">
+         No results for <span className="font-medium text-slate-700">&ldquo;{query}&rdquo;</span>
+        </div>
+        ) : (
             <div role="list" aria-label="Search results">
               {results.map((s) => (
                 <div key={`${s.label}-${s.sublabel}`} role="listitem">
@@ -727,14 +681,14 @@ function PanelContent({
             )}
 
             {/* Cancel — closes the panel */}
-            <div className="border-t border-slate-100 px-4 py-3">
+            <div className="border-t border-slate-100 px-4 py-3 flex justify-center">
               <button
-                type="button"
-                onClick={onClose}
-                className="w-full text-center text-sm font-medium text-slate-400 transition-colors hover:text-slate-700"
-              >
-                Cancel
-              </button>
+                  type="button"
+                  onClick={() => recentItems.forEach((_, i) => onClearRecent(recentItems.length - 1 - i))}
+                  className="text-[11px] text-slate-400 transition-colors hover:text-slate-700"
+                >
+                  Clear all
+                </button>
             </div>
           </div>
         )}
@@ -1086,7 +1040,7 @@ export function LocationPicker({
           onClick={() => !disabled && setOpen(true)}
           disabled={disabled}
           aria-haspopup="dialog"
-          className="flex h-8 min-w-0 items-center gap-2 px-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed"
+          className="flex h-8 min-w-0 max-w-full items-center gap-2 px-3 text-sm font-medium text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed"
         >
           <span className="truncate" title={pillTitle}>{pillLabel}</span>
           {pillRadius && (

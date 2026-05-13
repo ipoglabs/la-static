@@ -19,7 +19,7 @@ export default function SearchBar() {
       {/* TITLE */}
       <div className="container max-w-screen-sm mx-auto px-4 text-center pb-1">
         <h1 className="text-white text-2xl sm:text-4xl leading-tight font-bold mb-3">
-          Find Anything, Anywhere with <span className="text-rose-400">lokalads,just strat....</span>
+          Find Anything, Anywhere with <span className="text-rose-300">lokalads,</span> just strat....
         </h1>
      { /*<h3 className="text-slate-300">Search from 3.2M posts</h3>*/}
       </div>
@@ -67,6 +67,7 @@ export default function SearchBar() {
               countryScope={[scopeCode]}
               onChange={setLocation}
               searchProvider="google"
+              className="min-w-0 flex-1"
             />
 
             <a
