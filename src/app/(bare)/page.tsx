@@ -127,10 +127,10 @@ export default function HomePage() {
       <SearchBar />
 
       {/* Category Grid */}
-      <div className="container mx-auto px-3 py-3 columns-1 sm:columns-2 md:columns-3 gap-1 max-w-screen-lg shadow-[0_6px_16px_rgba(0,0,0,0.09)]
+      <div className="container mx-auto px-3 py-3 columns-1 sm:columns-2 md:columns-3 max-w-screen-lg shadow-[0_6px_16px_rgba(0,0,0,0.09)]
                 transition active:scale-[0.98]">
         {categories.map((cat) => (
-          <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full ">
+          <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-2 w-full ">
             <summary
               className={`
                 cursor-pointer list-none relative
@@ -138,7 +138,7 @@ export default function HomePage() {
                 rounded-2xl group-open:rounded-b-none
                 px-0 py-0
                 ${cat.bg}
-                border border-slate-300
+                border border-slate-400/70
                 
               `}
             >
