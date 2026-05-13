@@ -46,7 +46,7 @@ export default function SearchBar() {
 
           {/* INPUT */}
           <input
-            className="w-full h-[38px] pl-10 pr-20 rounded-md bg-gray-100 focus:bg-white outline-none text-sm"
+            className="w-full h-[38px] pl-10 pr-20 rounded-md bg-gray-100 focus:bg-white outline-none text-base font-semibold"
             placeholder="ex: Toyota Hybrid Car in Vehicles"
           />
 
