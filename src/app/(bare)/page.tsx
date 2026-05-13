@@ -142,15 +142,15 @@ export default function HomePage() {
                 transition active:scale-[0.98]
               `}
             >
-             <Image
+           {/*  <Image
              src={cat.icon}
               alt={cat.title}
               width={50}
               height={50}
-              className="flex-none mr-1 w-22 h-22 object-contain border-2 border-red-600 rounded-xl p-1"
-             />
+              className="flex-none mr-1 w-22 h-22 object-contain border border-red-600"
+             />*/}<img src={cat.icon}className="flex-none mr-1 w-22 h-22 object-contain border border-red-600"></img>
               {/* Title & desc */}
-              <div className="relative z-10 flex-1 pr-10">
+              <div className="relative flex-1 py-1 pr-10">
                 <h2 className="text-xl font-bold text-slate-700">
                   {cat.title}
                 </h2>
