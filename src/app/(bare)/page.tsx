@@ -127,9 +127,10 @@ export default function HomePage() {
       <SearchBar />
 
       {/* Category Grid */}
-      <div className="container mx-auto px-3 py-3 columns-1 sm:columns-2 md:columns-3 gap-1.5 max-w-screen-lg">
+      <div className="container mx-auto px-3 py-3 columns-1 sm:columns-2 md:columns-3 gap-1 max-w-screen-lg shadow-[0_6px_16px_rgba(0,0,0,0.09)]
+                transition active:scale-[0.98]">
         {categories.map((cat) => (
-          <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full">
+          <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-4 w-full ">
             <summary
               className={`
                 cursor-pointer list-none relative
@@ -137,9 +138,8 @@ export default function HomePage() {
                 rounded-2xl group-open:rounded-b-none
                 px-0 py-0
                 ${cat.bg}
-                border border-slate-400
-                shadow-[0_6px_16px_rgba(0,0,0,0.09)]
-                transition active:scale-[0.98]
+                border border-slate-300
+                
               `}
             >
            {/*  <Image
@@ -148,7 +148,7 @@ export default function HomePage() {
               width={50}
               height={50}
               className="flex-none mr-1 w-22 h-22 object-contain border border-red-600"
-             />*/}<img src={cat.icon}className="flex-none mr-1 w-22 h-22 object-contain border border-red-600"></img>
+             />*/}<img src={cat.icon}className="flex-none mr-1 w-22 h-22 object-contain "></img>
               {/* Title & desc */}
               <div className="relative flex-1 py-1 pr-10">
                 <h2 className="text-xl font-bold text-slate-700">

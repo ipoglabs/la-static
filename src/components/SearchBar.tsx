@@ -72,7 +72,7 @@ export default function SearchBar() {
 
             <a
               href="#"
-              className="group flex flex-none items-center gap-1.5 text-slate-300 hover:text-white transition-colors text-sm font-semibold"
+              className="group flex flex-none items-center gap-1.5 text-slate-200 hover:text-white transition-colors text-base font-semibold"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
