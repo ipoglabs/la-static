@@ -612,7 +612,7 @@ function PanelContent({
             {!savedOnly && (
               <>
                 {recentItems.length === 0 ? (
-                  <p className="px-4 pt-3 pb-1 text-xs text-slate-400">No recent searches</p>
+                  <p className="px-4 pt-3 pb-1 text-sm text-slate-400">No recent searches</p>
                 ) : (
                   <div role="list">
                     {recentItems.map((s, i) => (
@@ -685,7 +685,7 @@ function PanelContent({
               <button
                   type="button"
                   onClick={() => recentItems.forEach((_, i) => onClearRecent(recentItems.length - 1 - i))}
-                  className="text-[11px] text-slate-400 transition-colors hover:text-slate-700"
+                  className="text-sm text-slate-400 transition-colors hover:text-slate-700"
                 >
                   Clear all
                 </button>
@@ -746,7 +746,7 @@ function PanelContent({
 
       {/* Radius footer */}
       {showRadius && (
-        <div className="border-t border-slate-200 bg-white px-4 py-3">
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-3">
           <p className="mb-2 truncate text-sm font-medium text-slate-700">
             {current ? buildPillText(current.label, current.sublabel) : "Select location"}
           </p>
@@ -764,7 +764,7 @@ function PanelContent({
                       "flex-none rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-40",
                       isSelected
                         ? "border-slate-800 bg-slate-800 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800"
+                        : "border-slate-300 border-1.5 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800"
                     )}
                   >
                     {r} {radiusUnit}

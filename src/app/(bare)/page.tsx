@@ -137,8 +137,8 @@ export default function HomePage() {
                 rounded-2xl group-open:rounded-b-none
                 px-0 py-0
                 ${cat.bg}
-                border border-slate-300
-                shadow-[0_6px_16px_rgba(0,0,0,0.08)]
+                border border-slate-400
+                shadow-[0_6px_16px_rgba(0,0,0,0.09)]
                 transition active:scale-[0.98]
               `}
             >
