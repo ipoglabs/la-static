@@ -14,10 +14,10 @@ export default function SearchBar() {
   const scopeCode = country ? (SCOPE_CODE_MAP[country] ?? country) : null;
 
   return (
-    <div className="bg-slate-800 pt-4 pb-4 shadow-gray-200 shadow-lg w-full">
+    <div className="bg-slate-800 pt-3 pb-4 shadow-gray-200 shadow-lg w-full">
 
       {/* TITLE */}
-      <div className="container max-w-screen-sm mx-auto px-4 text-center pb-1">
+      <div className="container max-w-screen-sm mx-auto px-4 text-center ">
         <h1 className="text-white text-2xl sm:text-4xl leading-tight mb-3">
           <span className= "italic font-light ">Find Anything, Anywhere,  <br />with </span> <span className="text-rose-400 font-bold">lokalads ...</span>
         </h1>

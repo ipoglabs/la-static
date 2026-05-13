@@ -9,7 +9,7 @@ import Footer from '@/components/Footer'
 
 const categories = [
   {
-    title: 'Property 1',
+    title: 'Property',
     desc: 'Find your perfect home, rental or commercial space.',
     icon: '/assets/icons/categories/property.png',
     bg: 'bg-amber-100',
@@ -127,8 +127,7 @@ export default function HomePage() {
       <SearchBar />
 
       {/* Category Grid */}
-      <div className="container mx-auto px-3 py-3 columns-1 sm:columns-2 md:columns-3 max-w-screen-lg shadow-[0_6px_16px_rgba(0,0,0,0.09)]
-                transition active:scale-[0.98]">
+      <div className="container mx-auto px-3 py-3 columns-1 sm:columns-2 md:columns-3 max-w-screen-lg shadow-[0_6px_16px_rgba(0,0,0,0.09)]">
         {categories.map((cat) => (
           <details key={cat.title} className="group cursor-pointer break-inside-avoid mb-2 w-full ">
             <summary
