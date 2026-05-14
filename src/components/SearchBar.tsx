@@ -19,7 +19,7 @@ export default function SearchBar() {
       {/* TITLE */}
       <div className="container max-w-screen-sm mx-auto px-4 text-center ">
         <h1 className="text-white text-2xl sm:text-4xl leading-tight mb-3">
-          <span className= "italic font-light text-slate-50 ">Find Anything, Anywhere,  <br />with </span> <span className="text-rose-400 font-bold">lokalads ...</span>
+          <span className= "italic font-light text-slate-50 ">Find Anything, Anywhere,  <br />with </span> <span className="text-rose-400 font-bold">lokalads...</span>
         </h1>
      { /*<h3 className="text-slate-300">Search from 3.2M posts</h3>*/}
       </div>
