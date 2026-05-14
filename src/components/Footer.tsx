@@ -34,9 +34,7 @@ import ConditionsContent from "@/components/footer/ConditionsContent";
 import CookiePolicyContent from "@/components/footer/CookiePolicyContent";
 
 export default function Footer() {
-  const [activeSheet, setActiveSheet] = useState<
-    "privacy" | "conditions" | "cookies" | null
-  >(null);
+  const [activeSheet, setActiveSheet] = useState<"privacy" | "conditions" | "cookies" | null>(null);
   const [loading, setLoading] = useState(false)
   const isDesktop = useMediaQuery("(min-width: 768px)")
 // inside your component:
@@ -72,20 +70,19 @@ const found = COUNTRIES.find((c) => c.code === country);
 
           {/* Summary: Company Info & Toggle */}
           <summary className="cursor-pointer flex flex-col items-stretch justify-center">
-           <div className="flex items-center justify-between">
-  <Link className="flex gap-2 items-center" href="/">
-    <Image className="size-11" src="/assets/la-logo-symbol-black.svg" alt="logo" width={44} height={44} />
-    <div className="relative">
-      <Image className="w-24" src="/assets/la-text-white.svg" alt="logo" width={96} height={32} />
-      <span className="absolute right-1 -bottom-4 text-[11px] font-semibold text-white">
-        {found?.name || country}
-      </span>
-    </div>
-  </Link>
-            
+            <div className="flex items-center">
+              <Link className="flex gap-2 items-center" href="/">
+                <Image className="size-11" src="/assets/la-logo-symbol-black.svg" alt="logo" width={44} height={44} />
+                <div className="relative">
+                  <Image className="w-24" src="/assets/la-text-white.svg" alt="logo" width={96} height={32} />
+                  <span className="absolute right-1 -bottom-4 text-[11px] font-semibold text-white">
+                    {found?.name || country}
+                  </span>
+                </div>
+              </Link>
 
-              {/* Plus / Minus toggle */}
-              <div className="size-10 flex items-center justify-center text-white bg-slate-800 hover:bg-slate-600">
+              {/* Plus / Minus toggle — sits right next to the logo text */}
+              <div className="ml-2 size-10 flex items-center justify-center text-white bg-slate-800 hover:bg-slate-600">
                 {/* Plus — shown when closed */}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5"
                   stroke="currentColor" className="block h-5 w-5 group-open:hidden">

@@ -1,5 +1,5 @@
 function SkeletonBox({ className = "", style = {} }: { className?: string; style?: React.CSSProperties }) {
-  return <div className={`animate-pulse bg-slate-300 rounded ${className}`} style={style} />;
+  return <div className={`animate-pulse bg-slate-400 rounded ${className}`} style={style} />;
 }
 
 function SkeletonLogoSVG({ size = 38 }: { size?: number }) {
@@ -27,13 +27,29 @@ export default function HomePageSkeleton() {
       </div>
 
       {/* SEARCH BAR SKELETON */}
-      <div className="bg-slate-800 py-2">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-16 flex flex-col sm:flex-row gap-2">
-          <div className="animate-pulse h-[30px] w-full rounded bg-slate-600" />
-          <div className="animate-pulse h-[30px] w-full rounded bg-slate-600" />
-        </div>
-      </div>
+<div className="bg-slate-800 pt-3 pb-4 shadow-gray-200 shadow-lg w-full">
 
+  {/* TITLE SKELETON */}
+  <div className="container max-w-screen-sm mx-auto px-4 text-center mb-3 flex flex-col items-center gap-2">
+    <div className="animate-pulse h-6 sm:h-10 w-3/4 rounded bg-slate-600" />
+    <div className="animate-pulse h-6 sm:h-10 w-1/2 rounded bg-slate-600" />
+  </div>
+
+  {/* FORM SKELETON */}
+  <div className="container mx-auto px-4 flex flex-col gap-2 max-w-screen-lg">
+
+    {/* KEYWORD INPUT ROW SKELETON */}
+    <div className="animate-pulse h-6 w-full rounded-md bg-slate-600" />
+
+    {/* LOCATION + ALERT ROW SKELETON */}
+    <div className="flex items-center justify-between gap-3">
+      <div className="animate-pulse h-5 flex-1 rounded-md bg-slate-600" />
+      <div className="animate-pulse h-5 w-[44px] sm:w-[130px] flex-none rounded-md bg-slate-600" />
+    </div>
+
+  </div>
+
+</div>
       {/* CATEGORY GRID SKELETON */}
       <div className="container mx-auto px-2 py-4 columns-1 sm:columns-2 md:columns-3 gap-4 max-w-screen-lg">
         {[8, 6, 12, 9, 5, 11, 8, 7, 6].map((itemCount, i) => (
@@ -46,7 +62,7 @@ export default function HomePageSkeleton() {
                 <SkeletonBox className="w-full h-3 mb-1 rounded-full" />
                 <SkeletonBox className="w-3/4 h-3 rounded-full" />
               </div>
-              <div className="absolute right-3">
+              <div className="absolute right-4">
                 <SkeletonBox className="w-9 h-9 rounded-full" />
               </div>
             </div>
@@ -55,7 +71,7 @@ export default function HomePageSkeleton() {
       </div>
 
       {/* STATS SECTION SKELETON */}
-      <div className="bg-slate-300 py-5 border-t border-slate-400">
+      <div className="bg-slate-400 py-5 border-t border-slate-400">
         <div className="container mx-auto max-w-screen-lg grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="rounded-[25px] bg-white px-7 p-6">

@@ -141,13 +141,14 @@ export default function HomePage() {
                 
               `}
             >
-           {/*  <Image
+           <Image
              src={cat.icon}
               alt={cat.title}
-              width={50}
-              height={50}
-              className="flex-none mr-1 w-22 h-22 object-contain border border-red-600"
-             />*/}<img src={cat.icon}className="flex-none mr-1 w-22 h-22 object-contain "></img>
+              width={88}
+              height={88}
+              className="flex-none mr-1 w-22 h-22 object-contain"
+              />
+
               {/* Title & desc */}
               <div className="relative flex-1 py-1 pr-10">
                 <h2 className="text-xl font-bold text-slate-700">
