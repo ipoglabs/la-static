@@ -144,9 +144,9 @@ export default function HomePage() {
            <Image
              src={cat.icon}
               alt={cat.title}
-              width={88}
-              height={88}
-              className="flex-none mr-1 w-22 h-22 object-contain"
+              width={512}
+              height={512}
+              className="flex-none mr-1 w-20 h-20 object-contain"
               />
 
               {/* Title & desc */}
