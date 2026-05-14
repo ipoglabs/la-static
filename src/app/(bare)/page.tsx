@@ -11,14 +11,14 @@ const categories = [
   {
     title: 'Property',
     desc: 'Find your perfect home, rental or commercial space.',
-    icon: '/assets/icons/categories/property.png',
+    icon: '/assets/icons/categories/property3.png',
     bg: 'bg-amber-100',
     items: ['To Rent','To Buy','Room Rental','For Students','Commercial','Holiday Rental','Land for Sale/Lease','Wanted List'],
   },
   {
     title: 'Jobs',
     desc: 'Discover full-time, part-time, and freelance opportunities.',
-    icon: '/assets/icons/categories/jobs.png',
+    icon: '/assets/icons/categories/jobs3.png',
     bg: 'bg-teal-100',
     items: ['Full Time','Part Time','Freelance','Internship','Temporary & Seasonal','Wanted'],
   },
