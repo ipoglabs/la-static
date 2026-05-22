@@ -11,14 +11,14 @@ const categories = [
   {
     title: 'Property',
     desc: 'Find your perfect home, rental or commercial space.',
-    icon: '/assets/icons/categories/property3.png',
+    icon: '/assets/icons/categories/property.png',
     bg: 'bg-amber-100',
     items: ['To Rent','To Buy','Room Rental','For Students','Commercial','Holiday Rental','Land for Sale/Lease','Wanted List'],
   },
   {
     title: 'Jobs',
     desc: 'Discover full-time, part-time, and freelance opportunities.',
-    icon: '/assets/icons/categories/jobs3.png',
+    icon: '/assets/icons/categories/jobs.png',
     bg: 'bg-teal-100',
     items: ['Full Time','Part Time','Freelance','Internship','Temporary & Seasonal','Wanted'],
   },
@@ -46,7 +46,7 @@ const categories = [
   {
     title: 'For Sale',
     desc: 'Great deals on electronics, furniture, and more.',
-    icon: '/assets/icons/categories/forsale.png',
+    icon: '/assets/icons/categories/for_sale.png',
     bg: 'bg-yellow-100',
     items: ['Electronics','Home & Furniture','Office Supplies','Fashion & Accessories','Sports & Fitness','Toys & Games','Book, Music & Media','Baby & Kids','Health & Beauty','Garden & Outdoors','Hobbies & Collections','Miscellaneous'],
   },
@@ -67,7 +67,7 @@ const categories = [
   {
     title: 'Special Offers',
     desc: 'Exclusive deals, discounts, and limited-time offers.',
-    icon: '/assets/icons/categories/special_offer.png',
+    icon: '/assets/icons/categories/specialoffer.png',
     bg: 'bg-rose-100',
     items: ['Banking & Financial Deals','Travel & Tourism','Retail & Shopping','Food & Dining','Electronics & Gadgets','Health & Wellness','Education & Learning','Holiday & Seasonal Offers','Entertainment','Home & Living','Automotive','Miscellaneous'],
   },
@@ -144,9 +144,9 @@ export default function HomePage() {
            <Image
              src={cat.icon}
               alt={cat.title}
-              width={512}
-              height={512}
-              className="flex-none mr-1 w-20 h-20 object-contain"
+              width={88}
+              height={88}
+              className="flex-none mr-1 w-22 h-22 object-contain"
               />
 
               {/* Title & desc */}
