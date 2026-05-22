@@ -24,6 +24,7 @@ const sections = [
       { title: "Form Field / Wrapper", desc: "Label, hint, error states", href: "/design/field", icon: "⊟" },
       { title: "Header", desc: "Top navigation bar variants", href: "/design/header", icon: "▬" },
       { title: "Footer", desc: "Site footer layout", href: "/design/footer", icon: "▬" },
+    { title: "Currency Input", desc: "Amount field with currency selector & conversion", href: "/design-system/currency-input", icon: "💱" },
     ],
   },
   {
