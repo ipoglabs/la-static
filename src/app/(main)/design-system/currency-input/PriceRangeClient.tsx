@@ -141,7 +141,8 @@ function LaAmountRange({
 
     return (
       <div style={{
-        flex: 1,
+        flex: "1 1 0",
+        minWidth: 0,
         border: "1px solid #d8d8d8",
         borderRadius: 14,
         height: 52,
@@ -149,8 +150,9 @@ function LaAmountRange({
         alignItems: "center",
         padding: "0 4px 0 14px",
         background: "#fff",
+        overflow: "hidden",
       }}>
-        <span style={{ fontWeight: 600, fontSize: 14, marginRight: 8, color: "#222", whiteSpace: "nowrap" }}>
+        <span style={{ fontWeight: 600, fontSize: 14, marginRight: 8, color: "#222", whiteSpace: "nowrap", flexShrink: 0 }}>
           {sym}
         </span>
         <input
@@ -179,6 +181,7 @@ function LaAmountRange({
             fontWeight: 500,
             color: "#222",
             minWidth: 0,
+            width: 0,
           }}
         />
         <button
