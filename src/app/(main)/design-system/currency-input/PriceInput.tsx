@@ -428,7 +428,7 @@ export function PriceInput({ countryCode }: { countryCode?: string }) {
         }}
       >
         <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 24, color: "#111" }}>
-          Amount
+          la-amount-input
         </div>
         <LaAmountInput
           label="Enter your amount"

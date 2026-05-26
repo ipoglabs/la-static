@@ -530,7 +530,7 @@ export function PriceRangeClient({ countryCode }: { countryCode?: string }) {
         }}
       >
         <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 24, color: "#111" }}>
-          Price Range
+          La-range-input
         </div>
         <LaAmountRange
           label="Select your budget"
