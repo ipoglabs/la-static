@@ -1,164 +1,225 @@
 'use client'
-import { useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import { useDonationStore } from '@/app/store/donationStore'
+import StripeProvider from '@/components/StripeProvider'
+import CheckoutForm from '@/components/CheckoutForm'
 
+// ─── Stepper ──────────────────────────────────────────────────────────────────
+const Stepper = ({ step }: { step: number }) => (
+  <div className="flex items-center gap-0 mb-7">
+    {[1, 2, 3].map((n, i) => (
+      <div key={n} className="flex items-center flex-1 last:flex-none">
+        <div className="flex items-center gap-1.5">
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all
+            ${n < step ? 'bg-green-600 text-white' : n === step ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-400'}`}>
+            {n < step ? '✓' : n}
+          </div>
+          <span className={`text-xs font-medium whitespace-nowrap
+            ${n < step ? 'text-green-600' : n === step ? 'text-blue-700' : 'text-slate-400'}`}>
+            {['Amount', 'Review', 'Done'][n - 1]}
+          </span>
+        </div>
+        {i < 2 && (
+          <div className={`flex-1 h-0.5 mx-1 transition-colors ${n < step ? 'bg-green-500' : 'bg-slate-200'}`} />
+        )}
+      </div>
+    ))}
+  </div>
+)
+
+// ─── Currency options (value = lowercase for Stripe) ─────────────────────────
+const CURRENCIES = [
+  { value: 'sgd', label: 'SGD — Singapore Dollar', symbol: 'S$' },
+  { value: 'inr', label: 'INR — Indian Rupee',      symbol: '₹'  },
+  { value: 'gbp', label: 'GBP — British Pound',     symbol: '£'  },
+]
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DonateReviewPage() {
-  const [tab, setTab] = useState<'sp' | 'cc'>('sp')
+  const router = useRouter()
+
+  // FIX: read amountRaw (clean number) instead of amount (display string like "£30")
+  const { amount, amountRaw, method, donor, setStatus, setTransactionId } = useDonationStore()
+
+  // Destructure primitives to avoid object-reference issues in useEffect deps
+  const donorName  = donor?.name  ?? ''
+  const donorEmail = donor?.email ?? ''
+
+  const [mounted, setMounted]           = useState(false)   // hydration guard
+  const [currency, setCurrency]         = useState('gbp')   // default to GBP (store default)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [loading, setLoading]           = useState(false)
+  const [apiError, setApiError]         = useState('')
+  const [retryKey, setRetryKey]         = useState(0)       // triggers retry
+
+  const pmLabels: Record<string, string> = {
+    qr: 'Scan & Pay (UPI)', card: 'Credit Card', paypal: 'PayPal',
+  }
+  const currencySymbol = CURRENCIES.find(c => c.value === currency)?.symbol ?? ''
+
+  // Wait for Zustand to hydrate from sessionStorage before checking store
+  useEffect(() => { setMounted(true) }, [])
+
+  // Guard: only redirect after hydration
+  useEffect(() => {
+    if (!mounted) return
+    if (!donorName || !donorEmail) router.replace('/donate')
+  }, [mounted, donorName, donorEmail, router])
+
+  // Auto-select INR for UPI/QR; GBP for card/paypal
+  useEffect(() => {
+    if (method === 'qr') setCurrency('inr')
+    else setCurrency('gbp')
+  }, [method])
+
+  // Create Stripe PaymentIntent
+  useEffect(() => {
+    if (!mounted || !amountRaw || !donorName || !donorEmail) return
+
+    const create = async () => {
+      setLoading(true)
+      setApiError('')
+      setClientSecret(null)
+
+      try {
+        const res = await fetch('/api/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: amountRaw,          // FIX: clean number directly, no string stripping needed
+            currency,                   // FIX: already lowercase ('gbp'/'inr'/'sgd') — Stripe requires lowercase
+            donorName,
+            email: donorEmail,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Could not initialise payment')
+        setClientSecret(data.clientSecret)
+      } catch (err: any) {
+        setApiError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    create()
+  }, [mounted, amountRaw, currency, donorName, donorEmail, retryKey])
+
+  const handleSuccess = (txId: string) => {
+    setTransactionId(txId)
+    setStatus('success')
+    router.push('/donate/status')
+  }
+
+  const handleError = (msg: string) => {
+    setStatus('failed')
+    setApiError(msg)
+  }
+
+  // Don't render until store has hydrated — prevents flicker + false redirects
+  if (!mounted) return null
 
   return (
-    <div className="bg-white min-w-[375px]">
+    <div className="bg-slate-50 min-w-[375px] min-h-screen">
       <Header />
+      <div className="max-w-screen-sm mx-auto px-4 py-6">
+        <Stepper step={2} />
 
-      <div className="max-w-screen-lg container mx-auto flex flex-col items-stretch flex-nowrap px-4 sm:px-6 lg:px-16 pt-6 pb-5">
+        {/* Heading */}
+        <div className="text-center mb-5">
+          <p className="text-lg font-bold text-slate-800">
+            Thank you, {donorName || 'there'}!
+          </p>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Donating{' '}
+            {/* FIX: show amount (display string from store e.g. "£30") as-is */}
+            <span className="font-bold text-blue-700">{amount}</span>{' '}
+            via <span className="font-semibold text-slate-700">{pmLabels[method] ?? method}</span>
+          </p>
+        </div>
 
-        {/* Payment method toggle */}
-        <div className="px-4 py-4 flex flex-col items-center gap-3 rounded-md mb-3">
-          <legend className="text-center text-lg font-semibold select-none">Select Payment Method:</legend>
+        {/* Currency picker */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-4">
+          <label className="block text-xs font-semibold text-slate-600 mb-2">
+            Pay in currency
+          </label>
+          <div className="flex gap-2 flex-wrap">
+            {CURRENCIES.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => setCurrency(c.value)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition
+                  ${currency === c.value
+                    ? 'bg-blue-700 text-white border-blue-700'
+                    : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}
+              >
+                {c.symbol} {c.value.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          {method === 'qr' && currency !== 'inr' && (
+            <p className="text-xs text-amber-600 mt-2">
+              ⚠ UPI works best with INR. Switch to ₹ INR for UPI QR code.
+            </p>
+          )}
+        </div>
 
-          <div className="bg-slate-200 border border-slate-300 rounded-full p-1 flex flex-row flex-nowrap gap-0.5 max-w-96 mb-1 sm:mb-4 -mt-2">
-            <button
-              type="button"
-              onClick={() => setTab('sp')}
-              className={`relative flex-1 px-6 py-2 rounded-full select-none text-lg font-semibold flex flex-row justify-center items-center gap-2 transition-colors ${tab === 'sp' ? 'bg-slate-700 text-white' : 'bg-transparent text-slate-800'}`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path fillRule="evenodd" d="M3 4.875C3 3.839 3.84 3 4.875 3h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 3 9.375v-4.5ZM4.875 4.5a.375.375 0 0 0-.375.375v4.5c0 .207.168.375.375.375h4.5a.375.375 0 0 0 .375-.375v-4.5a.375.375 0 0 0-.375-.375h-4.5Zm7.875.375c0-1.036.84-1.875 1.875-1.875h4.5C20.16 3 21 3.84 21 4.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5a1.875 1.875 0 0 1-1.875-1.875v-4.5Zm1.875-.375a.375.375 0 0 0-.375.375v4.5c0 .207.168.375.375.375h4.5a.375.375 0 0 0 .375-.375v-4.5a.375.375 0 0 0-.375-.375h-4.5ZM6 6.75A.75.75 0 0 1 6.75 6h.75a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-.75.75h-.75A.75.75 0 0 1 6 7.5v-.75Zm9.75 0A.75.75 0 0 1 16.5 6h.75a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-.75.75h-.75a.75.75 0 0 1-.75-.75v-.75ZM3 14.625c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.035-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 0 1 3 19.125v-4.5Zm1.875-.375a.375.375 0 0 0-.375.375v4.5c0 .207.168.375.375.375h4.5a.375.375 0 0 0 .375-.375v-4.5a.375.375 0 0 0-.375-.375h-4.5Z" clipRule="evenodd" />
+        {/* Stripe Payment Form */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-4">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            Payment Details
+          </p>
+
+          {loading && (
+            <div className="flex items-center justify-center py-10 gap-3">
+              <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
-              <span className="whitespace-nowrap">Scan Pay</span>
-            </button>
+              <span className="text-sm text-slate-500">Setting up secure payment...</span>
+            </div>
+          )}
 
-            <button
-              type="button"
-              onClick={() => setTab('cc')}
-              className={`relative flex-1 px-6 py-2 rounded-full select-none text-lg font-semibold flex flex-row justify-center items-center gap-2 transition-colors ${tab === 'cc' ? 'bg-slate-700 text-white' : 'bg-transparent text-slate-800'}`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                <path d="M4.5 3.75a3 3 0 0 0-3 3v.75h21v-.75a3 3 0 0 0-3-3h-15Z" />
-                <path fillRule="evenodd" d="M22.5 9.75h-21v7.5a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3v-7.5Zm-18 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z" clipRule="evenodd" />
-              </svg>
-              <span className="whitespace-nowrap">Credit Card</span>
-            </button>
-          </div>
+          {apiError && !loading && (
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-3 flex items-center justify-between gap-2">
+              <span>{apiError}</span>
+              {/* FIX: retryKey increment actually re-triggers the useEffect */}
+              <button
+                onClick={() => setRetryKey(k => k + 1)}
+                className="shrink-0 underline text-red-600 font-medium"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {clientSecret && !loading && (
+            <StripeProvider clientSecret={clientSecret}>
+              <CheckoutForm
+                amount={amountRaw}        // FIX: clean number, no stripping
+                currency={currency}       // already lowercase
+                onSuccess={handleSuccess}
+                onError={handleError}
+              />
+            </StripeProvider>
+          )}
         </div>
 
-        {/* Mobile thank you note */}
-        <div className="md:hidden text-center mb-4">
-          <p className="text-slate-800 text-2xl font-bold mb-1">Thank you, Jannet Willson!</p>
-          <p className="text-slate-600 text-xl font-semibold">You&apos;ve chosen to donate <span className="font-bold">£500</span>.</p>
+        {/* Payment method info */}
+        <div className="bg-slate-100 rounded-xl px-4 py-3 mb-4 text-xs text-slate-500 leading-relaxed">
+          {currency === 'inr' && '🇮🇳 UPI, Netbanking, and Indian debit/credit cards supported.'}
+          {currency === 'sgd' && '🇸🇬 PayNow, GrabPay, and Visa/Mastercard supported.'}
+          {currency === 'gbp' && '🇬🇧 Apple Pay, Google Pay, and UK cards supported.'}
         </div>
 
-        <div className="flex flex-col md:flex-row flex-nowrap gap-6">
-
-          {/* Left column */}
-          <div className="flex-1 md:w-1/2 max-md:order-2 max-md:pt-8">
-
-            {/* Scan Pay tab */}
-            {tab === 'sp' && (
-              <div>
-                <div className="hidden md:block text-center mb-4">
-                  <p className="text-slate-800 text-2xl font-bold mb-1">Thank you, Jannet Willson!</p>
-                  <p className="text-slate-600 text-xl font-semibold">You&apos;ve chosen to donate <span className="font-bold">£500</span>.</p>
-                </div>
-                <ol className="text-slate-700 list-decimal ml-5 mb-6 space-y-2">
-                  <li>Scan the QR code using your mobile banking app, or save &amp; upload it from your device.</li>
-                  <li>Complete the payment before the QR code expires.</li>
-                  <li>You will be redirected to a confirmation page after payment.</li>
-                </ol>
-                <div className="bg-red-100 rounded-lg py-4 px-5 text-base text-red-700 mb-3" role="alert">
-                  <b>Please stay on this page until your payment is processed.</b>{' '}
-                  If you face issues, check the donation status on the home page after <b>30 minutes</b>.
-                </div>
-              </div>
-            )}
-
-            {/* Credit Card tab */}
-            {tab === 'cc' && (
-              <div className="flex flex-col items-center text-center">
-                <Image className="inline-block w-36 mb-4" src="/assets/paypal-sheild-logo.svg" alt="PayPal Shield Logo" width={144} height={144} />
-                <h2 className="w-8/12 text-2xl font-semibold text-slate-700 mb-2">PayPal is the safer, easier way to pay</h2>
-                <p className="w-10/12 text-slate-700 mb-4">No matter which card you use, we keep your financial information secure.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Right column */}
-          <div className="flex-1 relative max-md:order-1">
-
-            {/* Scan Pay QR */}
-            {tab === 'sp' && (
-              <div className="flex flex-col items-center">
-                <div className="flex flex-col items-center px-5 pb-4 mb-3">
-                  <div className="flex gap-2 items-center scale-90 mb-3">
-                    <Image className="size-10" src="/assets/la-logo-symbol-color.svg" alt="logo" width={40} height={40} />
-                    <Image className="w-24" src="/assets/la-text-black.svg" alt="logo" width={96} height={32} />
-                  </div>
-                  <p className="text-lg font-semibold text-center mb-3">Scan with your bank or payment app</p>
-                  <div className="size-60 border border-slate-500 rounded-md -mb-3 p-1">
-                    <Image className="inline-block w-full h-full" src="/assets/dummy-qr.png" alt="QR Code" width={240} height={240} />
-                  </div>
-                  <div className="rounded-full bg-red-500 px-3 font-mono text-md font-medium tracking-tight text-white uppercase">
-                    Scan to Pay
-                  </div>
-                </div>
-                <button className="bg-blue-800 rounded-md text-sm text-white flex items-center gap-3 px-4 py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4">
-                    <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
-                    <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
-                  </svg>
-                  <span>Download QR Code</span>
-                </button>
-              </div>
-            )}
-
-            {/* Credit Card form */}
-            {tab === 'cc' && (
-              <div className="flex flex-col gap-0 max-md:px-8">
-                <div className="flex flex-row justify-between items-center border-b border-slate-300 py-8 mb-8">
-                  <Image className="inline-block w-32" src="/assets/paypal-logo-color.svg" alt="PayPal" width={128} height={40} />
-                  <div className="text-2xl font-bold text-slate-800">£500 <span className="font-normal text-sm">GBP</span></div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Card Number</label>
-                    <input type="text" placeholder="1234 5678 9012 3456" className="w-full rounded-md px-3 py-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Expiry</label>
-                      <input type="text" placeholder="MM / YY" className="w-full rounded-md px-3 py-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">CVV</label>
-                      <input type="text" placeholder="123" className="w-full rounded-md px-3 py-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Name on Card</label>
-                    <input type="text" placeholder="John Smith" className="w-full rounded-md px-3 py-2 border border-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm" />
-                  </div>
-                  <div className="flex gap-3 mt-2">
-                    <Image src="/assets/visa-logo.svg" alt="Visa" width={48} height={28} />
-                    <Image src="/assets/mastercard-logo.svg" alt="Mastercard" width={48} height={28} />
-                    <Image src="/assets/paypal-pp-color-logo.svg" alt="PayPal" width={28} height={28} />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="flex justify-center mt-8">
-          <Link
-            href="/donate/status"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg px-10 py-3 rounded-full shadow-md transition"
-          >
-            Confirm &amp; Pay £500
-          </Link>
-        </div>
+        <button
+          onClick={() => router.back()}
+          className="w-full py-2.5 rounded-full border border-slate-200 bg-white text-slate-500 text-sm font-medium hover:bg-slate-50 transition"
+        >
+          ← Back
+        </button>
       </div>
     </div>
   )
