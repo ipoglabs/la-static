@@ -78,18 +78,14 @@ function LaAmountRange({
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerType, setDrawerType] = useState<DrawerType>("min");
-  const [drawerInputText, setDrawerInputText] = useState("");
   const [minInput, setMinInput] = useState(minValue === 0 ? "" : fmtNum(minValue));
   const [maxInput, setMaxInput] = useState(maxValue === ABSOLUTE_MAX ? "" : fmtNum(maxValue));
-
-  // Track which field the user last typed in — only that field shows the error
   const [lastEdited, setLastEdited] = useState<"min" | "max" | null>(null);
 
   // ── Derived numeric values ────────────────────────────────────────
   const minNum = minInput === "" ? 0 : parseInt(minInput.replace(/,/g, ""), 10);
   const maxNum = maxInput === "" ? ABSOLUTE_MAX : parseInt(maxInput.replace(/,/g, ""), 10);
 
-  // Conflict: both fields filled and min >= max
   const hasConflict =
     minInput !== "" &&
     maxInput !== "" &&
@@ -97,28 +93,16 @@ function LaAmountRange({
     !isNaN(maxNum) &&
     minNum >= maxNum;
 
-  // Only show error on the field the user last typed in
   const minError = hasConflict && lastEdited === "min";
   const maxError = hasConflict && lastEdited === "max";
 
-  // ── Drawer input validation ───────────────────────────────────────
-  const drawerNum = parseInt(drawerInputText.replace(/,/g, ""), 10);
-  const drawerInvalid =
-    drawerInputText !== "" &&
-    (isNaN(drawerNum) ||
-      drawerNum < 0 ||
-      (drawerType === "min" && maxValue !== ABSOLUTE_MAX && drawerNum >= maxValue) ||
-      (drawerType === "max" && minValue > 0 && drawerNum <= minValue));
-
   const openDrawer = (type: DrawerType) => {
     setDrawerType(type);
-    setDrawerInputText("");
     setDrawerOpen(true);
   };
 
   const handleSelect = (val: number | null) => {
-    setLastEdited(null); // clear error state when preset selected
-    setDrawerInputText("");
+    setLastEdited(null);
     if (drawerType === "min") {
       const resolved = val === null ? 0 : val;
       onMinChange?.(resolved);
@@ -137,12 +121,6 @@ function LaAmountRange({
       }
     }
     setDrawerOpen(false);
-  };
-
-  const handleDrawerApply = () => {
-    const raw = parseInt(drawerInputText.replace(/,/g, ""), 10);
-    if (isNaN(raw) || raw < 0) return;
-    handleSelect(raw === 0 && drawerType === "min" ? 0 : raw);
   };
 
   const presets: Preset[] = drawerType === "min" ? presetDefs.min : presetDefs.max;
@@ -201,9 +179,8 @@ function LaAmountRange({
             inputMode="numeric"
             placeholder={placeholder}
             value={val}
-            onFocus={() => setLastEdited(null)} // clear errors when user focuses
+            onFocus={() => setLastEdited(null)}
             onChange={(e) => {
-              // Set lastEdited FIRST so validation knows which field to flag
               setLastEdited(type);
               const raw = e.target.value.replace(/[^0-9]/g, "");
               const n = raw === "" ? null : parseInt(raw, 10);
@@ -257,7 +234,6 @@ function LaAmountRange({
           </button>
         </div>
 
-        {/* Inline error — only shown on the field that caused the conflict */}
         {isError && (
           <p style={{ fontSize: 12, color: "#c0392b", margin: "0 2px" }}>
             {errMsg}
@@ -307,14 +283,14 @@ function LaAmountRange({
       {/* ── Drawer ── */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>{drawerType === "min" ? "Minimum" : "Maximum"}</DrawerTitle>
+          <DrawerHeader style={{ paddingTop: 28, paddingBottom: 20 }}>
+           <DrawerTitle>{drawerType === "min" ? "Minimum" : "Maximum"}</DrawerTitle>
             <DrawerClose asChild>
               <button
                 style={{
                   position: "absolute",
                   right: 20,
-                  top: 20,
+                  top: 28,
                   width: 28,
                   height: 28,
                   borderRadius: "50%",
@@ -333,96 +309,7 @@ function LaAmountRange({
             </DrawerClose>
           </DrawerHeader>
 
-          {/* Custom amount input */}
-          <div style={{ padding: "12px 20px 8px", borderBottom: "1px solid #f0f0f0" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                border: drawerInvalid ? "1.5px solid #c0392b" : "1.5px solid #d8d8d8",
-                borderRadius: 12,
-                padding: "0 14px",
-                height: 48,
-                background: "#fafafa",
-              }}
-            >
-              <span style={{ fontWeight: 700, fontSize: 14, color: "#222", whiteSpace: "nowrap" }}>
-                {sym}
-              </span>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder={drawerType === "min" ? "Enter min amount" : "Enter max amount"}
-                value={drawerInputText}
-                onChange={(e) => setDrawerInputText(e.target.value.replace(/[^0-9]/g, ""))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !drawerInvalid && drawerInputText !== "")
-                    handleDrawerApply();
-                }}
-                style={{
-                  flex: 1,
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: "#222",
-                }}
-              />
-              {drawerInputText !== "" && (
-                <button
-                  onClick={() => setDrawerInputText("")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#aaa",
-                    fontSize: 16,
-                    lineHeight: 1,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {drawerInvalid && (
-              <p style={{ fontSize: 12, color: "#c0392b", margin: "6px 2px 0" }}>
-                {drawerType === "min"
-                  ? `Must be less than max (${sym} ${fmtNum(maxValue)})`
-                  : `Must be greater than min (${sym} ${fmtNum(minValue)})`}
-              </p>
-            )}
-
-            {drawerInputText !== "" && !drawerInvalid && (
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleDrawerApply();
-                }}
-                style={{
-                  marginTop: 10,
-                  width: "100%",
-                  height: 44,
-                  borderRadius: 12,
-                  background: "#111",
-                  color: "#fff",
-                  border: "none",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Apply
-              </button>
-            )}
-          </div>
-
-          {/* Preset list */}
+          {/* Preset list only — no custom input */}
           <div style={{ overflowY: "auto", flex: 1, paddingBottom: 24 }}>
             {presets.map(({ value: val, label: presetLabel }, i) => {
               const isSelected =
@@ -530,7 +417,7 @@ export function PriceRangeClient({ countryCode }: { countryCode?: string }) {
         }}
       >
         <div style={{ fontSize: 32, fontWeight: 700, marginBottom: 24, color: "#111" }}>
-          La-range-input
+          la-range-input
         </div>
         <LaAmountRange
           label="Select your budget"

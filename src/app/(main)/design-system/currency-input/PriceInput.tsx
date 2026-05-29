@@ -67,33 +67,15 @@ function LaAmountInput({
   const presets = buildPresets(sym);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerInputText, setDrawerInputText] = useState("");
   const [inputText, setInputText] = useState(
     value === 0 ? "" : fmtNum(value)
   );
 
-  // ── Drawer input validation (only checks positive number) ─────────
-  const drawerNum = parseInt(drawerInputText.replace(/,/g, ""), 10);
-  const drawerInvalid =
-    drawerInputText !== "" && (isNaN(drawerNum) || drawerNum < 0);
-
-  const openDrawer = () => {
-    setDrawerInputText("");
-    setDrawerOpen(true);
-  };
-
   const handleSelect = (val: number | null) => {
-    setDrawerInputText("");
     const resolved = val === null ? 0 : val;
     onChange?.(resolved);
     setInputText(resolved === 0 ? "" : fmtNum(resolved));
     setDrawerOpen(false);
-  };
-
-  const handleDrawerApply = () => {
-    const raw = parseInt(drawerInputText.replace(/,/g, ""), 10);
-    if (isNaN(raw) || raw < 0) return;
-    handleSelect(raw === 0 ? null : raw);
   };
 
   return (
@@ -129,7 +111,6 @@ function LaAmountInput({
           background: "#fff",
         }}
       >
-        {/* Currency badge */}
         <span
           style={{
             display: "flex",
@@ -175,9 +156,8 @@ function LaAmountInput({
           }}
         />
 
-        {/* Chevron to open drawer */}
         <button
-          onClick={openDrawer}
+          onClick={() => setDrawerOpen(true)}
           style={{
             width: 36,
             height: 52,
@@ -204,7 +184,6 @@ function LaAmountInput({
         </button>
       </div>
 
-      {/* Summary */}
       <div style={{ fontSize: 12, color: "#888", textAlign: "center" }}>
         {value === 0 ? "No Amount" : `${sym} ${fmtNum(value)}`}
       </div>
@@ -238,107 +217,10 @@ function LaAmountInput({
             </DrawerClose>
           </DrawerHeader>
 
-          {/* Custom amount input */}
-          <div style={{ padding: "12px 20px 8px", borderBottom: "1px solid #f0f0f0" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                border: drawerInvalid ? "1.5px solid #c0392b" : "1.5px solid #d8d8d8",
-                borderRadius: 12,
-                padding: "0 14px",
-                height: 48,
-                background: "#fafafa",
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 700,
-                  fontSize: 14,
-                  color: "#222",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {sym}
-              </span>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="Enter amount"
-                value={drawerInputText}
-                onChange={(e) =>
-                  setDrawerInputText(e.target.value.replace(/[^0-9]/g, ""))
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !drawerInvalid && drawerInputText !== "")
-                    handleDrawerApply();
-                }}
-                style={{
-                  flex: 1,
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
-                  fontSize: 16,
-                  fontWeight: 500,
-                  color: "#222",
-                }}
-              />
-              {drawerInputText !== "" && (
-                <button
-                  onClick={() => setDrawerInputText("")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#aaa",
-                    fontSize: 16,
-                    lineHeight: 1,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {drawerInvalid && (
-              <p style={{ fontSize: 12, color: "#c0392b", margin: "6px 2px 0" }}>
-                Please enter a valid amount
-              </p>
-            )}
-
-            {drawerInputText !== "" && !drawerInvalid && (
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleDrawerApply();
-                }}
-                style={{
-                  marginTop: 10,
-                  width: "100%",
-                  height: 44,
-                  borderRadius: 12,
-                  background: "#111",
-                  color: "#fff",
-                  border: "none",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Apply
-              </button>
-            )}
-          </div>
-
-          {/* Preset list */}
+          {/* Preset list only — no custom input */}
           <div style={{ overflowY: "auto", flex: 1, paddingBottom: 24 }}>
             {presets.map(({ value: val, label: presetLabel }, i) => {
-              const isSelected =
-                val === null ? value === 0 : val === value;
+              const isSelected = val === null ? value === 0 : val === value;
 
               return (
                 <div key={i}>
