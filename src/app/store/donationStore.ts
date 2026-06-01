@@ -40,8 +40,8 @@ export interface DonationState {
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const defaults = {
-  amount: '£30',
-  amountRaw: 30,
+  amount: '£1',
+  amountRaw: 1,
   currency: 'GBP',
   method: 'qr' as PaymentMethod,
   donor: { name: '', email: '' },

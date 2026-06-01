@@ -63,7 +63,7 @@ export default function DonatePage() {
   const router = useRouter()
   const { setAmount, setMethod, setDonor } = useDonationStore()
 
-  const [selAmt, setSelAmt]       = useState('10')
+  const [selAmt, setSelAmt]       = useState('1')         // ← changed from '10' to '1'
   const [customAmt, setCustomAmt] = useState('')
   const [name, setName]           = useState('')
   const [email, setEmail]         = useState('')
