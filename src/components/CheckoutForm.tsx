@@ -50,7 +50,7 @@ export default function CheckoutForm({ amount, currency, onSuccess, onError }: C
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Stripe renders Card / UPI / Wallet tabs automatically based on currency */}
-      <PaymentElement options={{ layout: 'tabs' }} />
+      <PaymentElement options={{ layout: 'accordion' }} />
 
       {errorMsg && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">

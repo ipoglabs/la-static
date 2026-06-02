@@ -5,7 +5,7 @@ import Header from '@/components/Header'
 import { useDonationStore } from '@/app/store/donationStore'
 
 const amounts = [
-  { id: 'opt1', value: '1',    label: '£1',          desc: 'Help keep Lokalads running smoothly everyday.' },
+  { id: 'opt1', value: '10',    label: '£10',          desc: 'Help keep Lokalads running smoothly everyday.' },
   { id: 'opt2', value: '30',    label: '£30',          desc: 'Drive essential improvements and innovation.' },
   { id: 'opt3', value: '50',    label: '£50',          desc: 'Empower us to deliver better features and services.' },
   { id: 'opt4', value: '100',   label: '£100',         desc: 'Be the reason Lokalads transforms for the better.' },
@@ -63,7 +63,7 @@ export default function DonatePage() {
   const router = useRouter()
   const { setAmount, setMethod, setDonor } = useDonationStore()
 
-  const [selAmt, setSelAmt]       = useState('1')         // ← changed from '10' to '1'
+  const [selAmt, setSelAmt]       = useState('10')
   const [customAmt, setCustomAmt] = useState('')
   const [name, setName]           = useState('')
   const [email, setEmail]         = useState('')
@@ -149,26 +149,28 @@ export default function DonatePage() {
             })}
           </div>
 
-          {/* Other amount input */}
-          {selAmt === 'other' && (
-            <div className="border-l-4 border-blue-500 bg-blue-50 text-green-800 p-4 pl-6">
-              <label htmlFor="customAmt" className="block text-xl font-medium text-gray-700 mb-2">
-                Please Enter Other Amount
-              </label>
-              <div className="mt-1">
-                <input
-                  id="customAmt"
-                  name="name"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Other Amount"
-                  value={customAmt}
-                  onChange={(e) => { setCustomAmt(e.target.value); setErrors(er => ({ ...er, amount: undefined })) }}
-                  className="block w-2/3 appearance-none py-3 px-4 rounded-md bg-gray-100 placeholder-gray-500 border border-gray-700 focus:border-sky-900 focus:ring-2 focus:bg-white focus:outline-none focus:ring-blue-500 focus:ring-inset"
-                />
-              </div>
+          {/* Other amount input — always visible, matching HTML */}
+          <div className="border-l-4 border-blue-500 bg-blue-50 text-green-800 p-4 pl-6">
+            <label htmlFor="customAmt" className="block text-xl font-medium text-gray-700 mb-2">
+              Please Enter Other Amount
+            </label>
+            <div className="mt-1">
+              <input
+                id="customAmt"
+                name="name"
+                type="text"
+                inputMode="numeric"
+                placeholder="Other Amount"
+                value={customAmt}
+                onChange={(e) => {
+                  setCustomAmt(e.target.value)
+                  setSelAmt('other')
+                  setErrors(er => ({ ...er, amount: undefined }))
+                }}
+                className="block w-2/3 appearance-none py-3 px-4 rounded-md bg-gray-100 placeholder-gray-500 border border-gray-700 focus:border-sky-900 focus:ring-2 focus:bg-white focus:outline-none focus:ring-blue-500 focus:ring-inset"
+              />
             </div>
-          )}
+          </div>
 
           {errors.amount && <p className="text-sm text-red-500 mt-1">{errors.amount}</p>}
         </div>
