@@ -242,8 +242,8 @@ export default function DonateReviewPage() {
                 <h2 className="w-8/12 text-2xl font-semibold text-slate-700 mb-2">
                   Secure credit card payment
                 </h2>
-                <p className="w-10/12 text-slate-700 mb-4">
-                  No matter which card you use, we keep your financial information secure.
+                <p className="w-10/12 text-slate-700 mb-4"> 
+                  No matter which card you use, your card details are encrypted and processed securely via Stripe. We never store your card information.
                 </p>
               </div>
             )}
@@ -354,9 +354,9 @@ export default function DonateReviewPage() {
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 text-green-600">
                         <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
                       </svg>
-                      Secure Stripe Payment
+                      Secure Card Stripe Payment
                     </h2>
-                    <p>Your card details are encrypted and processed securely via Stripe. We never store your card information.</p>
+                    <p>We never store your card information, processed securely via Stripe.</p>
                   </section>
                 )}
 

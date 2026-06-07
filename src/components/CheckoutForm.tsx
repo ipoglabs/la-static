@@ -57,12 +57,7 @@ export default function CheckoutForm({ amount, currency, onSuccess, onError }: C
   // • variables / rules: match the site's input styling (gray-100 bg, gray-700
   //   border, blue-500 focus ring, Inter font family)
   const paymentElementOptions: StripePaymentElementOptions = {
-    layout: {
-      type: 'accordion',
-      defaultCollapsed: false,  // credit card section open immediately
-      radios: 'never',
-      spacedAccordionItems: true,
-    },
+    layout: 'tabs',
     paymentMethodOrder: ['card'],   // card first; keeps it top of the accordion
     wallets: {
       applePay: 'never',            // hides Apple Pay button (and Revolut via AP)
@@ -110,7 +105,7 @@ export default function CheckoutForm({ amount, currency, onSuccess, onError }: C
         )}
       </button>
 
-      <p className="text-center text-xs text-slate-400">
+      <p className="text-center text-sm text-slate-400">
         🔒 Secured by Stripe · PCI DSS Level 1
       </p>
     </form>

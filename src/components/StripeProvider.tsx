@@ -78,6 +78,13 @@ const appearance: Appearance = {
       border:          '1px solid #d1d5db',
       borderRadius:    '6px',
     },
+    // Hide the "Card" label + icon header inside the accordion
+    '.AccordionItem-title': {
+      display: 'none',
+    },
+    '.AccordionItem-title + *': {
+      marginTop: '0',
+    },
   },
 }
 
