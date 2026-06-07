@@ -5,7 +5,7 @@ import Header from '@/components/Header'
 import { useDonationStore } from '@/app/store/donationStore'
 
 const amounts = [
-  { id: 'opt1', value: '1',    label: '£1',          desc: 'Help keep Lokalads running smoothly everyday.' },
+  { id: 'opt1', value: '1',     label: '£1',           desc: 'Help keep Lokalads running smoothly everyday.' },
   { id: 'opt2', value: '30',    label: '£30',          desc: 'Drive essential improvements and innovation.' },
   { id: 'opt3', value: '50',    label: '£50',          desc: 'Empower us to deliver better features and services.' },
   { id: 'opt4', value: '100',   label: '£100',         desc: 'Be the reason Lokalads transforms for the better.' },
@@ -193,7 +193,7 @@ export default function DonatePage() {
                   id="donorName"
                   name="name"
                   type="text"
-                  autoComplete="name"
+                  autoComplete="off"
                   placeholder="Please enter your full name"
                   value={name}
                   onChange={(e) => { setName(e.target.value); setErrors(er => ({ ...er, name: undefined })) }}
@@ -214,7 +214,7 @@ export default function DonatePage() {
                   id="donorEmail"
                   name="email"
                   type="email"
-                  autoComplete="email"
+                  autoComplete="off"
                   placeholder="Please enter your email address"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setErrors(er => ({ ...er, email: undefined })) }}

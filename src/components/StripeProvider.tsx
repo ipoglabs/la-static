@@ -85,7 +85,9 @@ export default function StripeProvider({ clientSecret, children }: StripeProvide
   const options: StripeElementsOptions = {
     clientSecret,
     appearance,
-    // Load Inter into the Stripe iframe — changes 4 & 5
+    // Disable Stripe Link (the "Secure, fast checkout with Link" prompt)
+    paymentMethodCreation: 'manual' as any,
+    // Load Inter into the Stripe iframe
     fonts: [
       {
         cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap',
