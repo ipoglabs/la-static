@@ -5,7 +5,7 @@ import Header from '@/components/Header'
 import { useDonationStore } from '@/app/store/donationStore'
 
 const amounts = [
-  { id: 'opt1', value: '10',    label: '£10',          desc: 'Help keep Lokalads running smoothly everyday.' },
+  { id: 'opt1', value: '1',    label: '£1',          desc: 'Help keep Lokalads running smoothly everyday.' },
   { id: 'opt2', value: '30',    label: '£30',          desc: 'Drive essential improvements and innovation.' },
   { id: 'opt3', value: '50',    label: '£50',          desc: 'Empower us to deliver better features and services.' },
   { id: 'opt4', value: '100',   label: '£100',         desc: 'Be the reason Lokalads transforms for the better.' },
@@ -63,7 +63,7 @@ export default function DonatePage() {
   const router = useRouter()
   const { setAmount, setMethod, setDonor } = useDonationStore()
 
-  const [selAmt, setSelAmt]       = useState('10')
+  const [selAmt, setSelAmt]       = useState('1')
   const [customAmt, setCustomAmt] = useState('')
   const [name, setName]           = useState('')
   const [email, setEmail]         = useState('')
@@ -175,10 +175,8 @@ export default function DonatePage() {
           {errors.amount && <p className="text-sm text-red-500 mt-1">{errors.amount}</p>}
         </div>
 
-        {/* Divider */}
-        <hr className="w-full h-px my-8 bg-gray-200 border-0" />
-
         {/* ── Donor details ──────────────────────────────────────────────── */}
+        {/* NOTE: Horizontal rule removed per design update */}
         <div className="px-4">
           <h2 className="text-2xl mb-6">Please enter your details:</h2>
 
