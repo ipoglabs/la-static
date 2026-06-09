@@ -426,12 +426,13 @@ export default function DonateReviewPage() {
               {walletMethod === 'apple-pay' || walletMethod === 'google-pay' ? (
               clientSecret && (
               <StripeProvider clientSecret={clientSecret}>
-                        <WalletPayButton
-                          amount={amountRaw}
-                          currency={currency}
-                          onSuccess={handleSuccess}
-                          onError={handleError}
-                        />
+<WalletPayButton
+  amount={amountRaw}
+  currency={currency}
+  clientSecret={clientSecret}  
+  onSuccess={handleSuccess}
+  onError={handleError}
+/>
                       </StripeProvider>
                     )
                   ) : walletMethod === 'paypal' ? (
