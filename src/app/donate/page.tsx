@@ -194,16 +194,16 @@ export default function DonatePage() {
         {/* Headline */}
         <div className="text-center mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 leading-tight">
-            Support Lokalads — Together, We Build Stronger Communities!
+            Support Lokalads Together, We Build Stronger Communities!
           </h2>
-          <p className="text-base sm:text-lg text-slate-500 italic mt-2">
+          <p className="text-lg sm:text-lg text-slate-500 italic mt-2">
             &ldquo;Your contribution keeps Lokalads free and growing, so millions can benefit from our platform.&rdquo;
           </p>
         </div>
 
         {/* ── Amount Selection ── */}
         <fieldset className="mb-8">
-          <legend className="text-base font-semibold text-slate-700 mb-3">
+          <legend className="text-lg font-semibold text-slate-700 mb-3">
             Choose your contribution amount:
           </legend>
 

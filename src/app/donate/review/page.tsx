@@ -77,7 +77,6 @@ function QrTimer() {
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = 'sp' | 'wp' | 'cc'
 type WalletMethod = 'apple-pay' | 'google-pay' | 'paypal' | null
-type CardMethod = 'credit-card' | 'bank-transfer'
 
 // ─── Currency options ─────────────────────────────────────────────────────────
 const CURRENCIES = [
@@ -97,7 +96,6 @@ export default function DonateReviewPage() {
   const [mounted, setMounted]             = useState(false)
   const [activeTab, setActiveTab]         = useState<Tab>('cc')
   const [walletMethod, setWalletMethod]   = useState<WalletMethod>(null)
-  const [cardMethod, setCardMethod]       = useState<CardMethod>('credit-card')
   const [currency, setCurrency]           = useState('gbp')
   const [qrDataUrl, setQrDataUrl]         = useState('')
   const [clientSecret, setClientSecret]   = useState<string | null>(null)
@@ -184,9 +182,18 @@ export default function DonateReviewPage() {
           <p className="text-slate-800 text-2xl sm:text-3xl font-bold">
             Thank you {donorName || 'there'}!
           </p>
-          <p className="text-slate-600 text-xl sm:text-2xl font-semibold">
+          <p className="text-slate-600 text-sm sm:text-2xl font-semibold">
             You've chosen to donate <span className="font-bold">{amount}</span>.
           </p>
+           <div className="flex items-center justify-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-7 text-blue-700 shrink-0">
+                    <path d="M4.5 3.75a3 3 0 0 0-3 3v.75h21v-.75a3 3 0 0 0-3-3h-15Z" />
+                    <path fillRule="evenodd" d="M22.5 9.75h-21v7.5a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3v-7.5Zm-18 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-2xl font-bold text-slate-800">{amount}</span>
+                  <span className="text-sm font-normal text-slate-500">{currency.toUpperCase()}</span>
+                </div>
+
         </div>
 
         {/* ── Payment method toggle (3 tabs, original pill style) ────────── */}
@@ -250,10 +257,10 @@ export default function DonateReviewPage() {
         </div>
 
         {/* ── Two-column layout ──────────────────────────────────────────── */}
-        <div className="flex flex-col md:flex-row flex-nowrap">
+        <div className={cn("flex flex-nowrap", activeTab === 'cc' ? "flex-col items-center" : "flex-col md:flex-row")}>
 
-          {/* ── LEFT column ─────────────────────────────────────────────── */}
-          <div className="flex-1 md:flex-none md:w-1/2 max-md:order-2 max-md:pt-8">
+          {/* ── LEFT column (hidden for card tab) ─────────────────────────────── */}
+          <div className={cn("flex-1 md:flex-none md:w-1/2 max-md:order-2 max-md:pt-8", activeTab === 'cc' && "hidden")}>
 
             {/* SCAN PAY — left content */}
             {activeTab === 'sp' && (
@@ -288,27 +295,10 @@ export default function DonateReviewPage() {
                 </p>
               </div>
             )}
-
-            {/* CREDIT CARD — left content */}
-            {activeTab === 'cc' && (
-              <div className="flex flex-col items-center text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-28 text-blue-700 mb-4">
-                  <path d="M4.5 3.75a3 3 0 0 0-3 3v.75h21v-.75a3 3 0 0 0-3-3h-15Z" />
-                  <path fillRule="evenodd" d="M22.5 9.75h-21v7.5a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3v-7.5Zm-18 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z" clipRule="evenodd" />
-                </svg>
-                <h2 className="w-8/12 text-2xl font-semibold text-slate-700 mb-2">
-                  Secure credit card payment
-                </h2>
-                <p className="w-10/12 text-slate-700 mb-4">
-                  No matter which card you use, your card details are encrypted and processed securely via Stripe. We never store your card information.
-                </p>
-              </div>
-            )}
-
           </div>
 
           {/* ── RIGHT column ────────────────────────────────────────────── */}
-          <div className="flex-1 relative max-md:order-1">
+          <div className={cn("flex-1 relative max-md:order-1", activeTab === 'cc' && "w-full max-w-lg")}>
 
             {/* ── SCAN PAY — QR panel ─────────────────────────────────── */}
             {activeTab === 'sp' && (
@@ -449,128 +439,59 @@ export default function DonateReviewPage() {
 
             {/* ── CARD PAYMENT — Stripe form panel ────────────────────── */}
             {activeTab === 'cc' && (
-              <div className="flex flex-col gap-0 max-md:px-8">
-
-                {/* Card vs Bank sub-options */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setCardMethod('credit-card')}
-                    className={cn('flex-1 py-2 px-3 text-sm font-semibold rounded-lg border transition-all',
-                      cardMethod === 'credit-card'
-                        ? 'bg-slate-700 text-white border-slate-700'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                    )}
-                  >
-                    Credit / Debit Card
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCardMethod('bank-transfer')}
-                    className={cn('flex-1 py-2 px-3 text-sm font-semibold rounded-lg border transition-all',
-                      cardMethod === 'bank-transfer'
-                        ? 'bg-slate-700 text-white border-slate-700'
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                    )}
-                  >
-                    Bank Transfer
-                  </button>
-                </div>
-
-                {/* ── Credit / Debit — Stripe ── */}
-                {cardMethod === 'credit-card' && (
-                  <div className="flex flex-col gap-0">
-
-                    {/* Amount header row */}
-                    <div className="flex flex-row justify-center md:justify-between items-center py-2 mb-1">
-                      <div className="flex items-center justify-center md:justify-end gap-0 text-2xl font-bold text-slate-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-6 shrink-0">
-                          <path d="M12 7.5a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5Z" />
-                          <path fillRule="evenodd" d="M1.5 4.875C1.5 3.839 2.34 3 3.375 3h17.25c1.035 0 1.875.84 1.875 1.875v9.75c0 1.036-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 0 1 1.5 14.625v-9.75ZM8.25 9.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM18.75 9a.75.75 0 0 0-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 0 0 .75-.75V9.75a.75.75 0 0 0-.75-.75h-.008ZM4.5 9.75A.75.75 0 0 1 5.25 9h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75V9.75Z" clipRule="evenodd" />
-                          <path d="M2.25 18a.75.75 0 0 0 0 1.5c5.4 0 10.63.722 15.6 2.075 1.19.324 2.4-.558 2.4-1.82V18.75a.75.75 0 0 0-.75-.75H2.25Z" />
-                        </svg>
-                        <span>{amount}</span>
-                        <span className="font-normal text-sm">{currency.toUpperCase()}</span>
-                      </div>
-                    </div>
-
-                    {/* Loading */}
-                    {loading && (
-                      <div className="flex items-center justify-center py-10 gap-3">
-                        <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                        </svg>
-                        <span className="text-sm text-slate-500">Setting up secure payment...</span>
-                      </div>
-                    )}
-
-                    {/* API error */}
-                    {apiError && !loading && (
-                      <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-3 flex items-center justify-between gap-2">
-                        <span>{apiError}</span>
-                        <button onClick={() => setRetryKey(k => k + 1)} className="shrink-0 underline text-red-600 font-medium">Retry</button>
-                      </div>
-                    )}
-
-                    {/* Secure note */}
-                    {!loading && !apiError && (
-                      <section className="py-2 text-sm mb-2">
-                        <h2 className="text-base font-semibold flex items-center gap-1.5">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-6 text-green-600">
-                            <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
-                          </svg>
-                          Secure Card Stripe Payment
-                        </h2>
-                        <p>We never store your card information, processed securely via Stripe.</p>
-                      </section>
-                    )}
-
-                    {/* Stripe checkout form */}
-                    {clientSecret && !loading && (
-                      <StripeProvider clientSecret={clientSecret}>
-                        <CheckoutForm
-                          amount={amountRaw}
-                          currency={currency}
-                          onSuccess={handleSuccess}
-                          onError={handleError}
-                        />
-                      </StripeProvider>
-                    )}
-
-                    {/* Placeholder button before Stripe loads */}
-                    {!clientSecret && !loading && !apiError && (
-                      <button
-                        disabled
-                        className="px-8 py-2 border border-blue-600 bg-blue-500 opacity-50 cursor-not-allowed rounded-md text-lg text-rose-50 font-semibold mb-6"
-                      >
-                        Proceed to Pay
-                      </button>
-                    )}
+              <div className="flex flex-col items-center w-full max-md:px-4">
+    
+                {/* Loading */}
+                {loading && (
+                  <div className="flex items-center justify-center py-10 gap-3">
+                    <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span className="text-sm text-slate-500">Setting up secure payment...</span>
                   </div>
                 )}
 
-                {/* ── Bank Transfer ── */}
-                {cardMethod === 'bank-transfer' && (
-                  <div className="bg-white rounded-xl border border-slate-200 px-4 py-4">
-                    <p className="text-sm font-semibold text-slate-700 mb-3">Bank transfer details:</p>
-                    <div className="space-y-2 text-sm">
-                      {[
-                        ['Account Name', 'Lokalads Ltd'],
-                        ['Sort Code', '20-45-53'],
-                        ['Account Number', '73842910'],
-                        ['Reference', `DONATE-${amountRaw}`],
-                      ].map(([label, value]) => (
-                        <div key={label} className="flex justify-between items-center border-b border-slate-100 pb-2 last:border-0 last:pb-0">
-                          <span className="text-slate-500">{label}</span>
-                          <span className="font-semibold text-slate-800 font-mono text-right">{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-slate-400 mt-3">
-                      Transfers may take 1–3 business days. Please use the reference above so we can match your donation.
-                    </p>
+                {/* API error */}
+                {apiError && !loading && (
+                  <div className="w-full rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-3 flex items-center justify-between gap-2">
+                    <span>{apiError}</span>
+                    <button onClick={() => setRetryKey(k => k + 1)} className="shrink-0 underline text-red-600 font-medium">Retry</button>
                   </div>
+                )}
+
+                {/* Secure note */}
+                {!loading && !apiError && (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 text-green-600 shrink-0">
+                      <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+                    </svg>
+                    Encrypted &amp; processed securely via Stripe. We never store your card details.
+                  </div>
+                )}
+
+                {/* Stripe checkout form */}
+                {clientSecret && !loading && (
+                  <div className="w-full">
+                    <StripeProvider clientSecret={clientSecret}>
+                      <CheckoutForm
+                        amount={amountRaw}
+                        currency={currency}
+                        onSuccess={handleSuccess}
+                        onError={handleError}
+                      />
+                    </StripeProvider>
+                  </div>
+                )}
+
+                {/* Placeholder button before Stripe loads */}
+                {!clientSecret && !loading && !apiError && (
+                  <button
+                    disabled
+                    className="px-8 py-2 border border-blue-600 bg-blue-500 opacity-50 cursor-not-allowed rounded-md text-lg text-rose-50 font-semibold mb-6"
+                  >
+                    Proceed to Pay
+                  </button>
                 )}
 
               </div>

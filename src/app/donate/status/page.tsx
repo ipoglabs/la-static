@@ -6,32 +6,45 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, useStripe } from '@stripe/react-stripe-js'
 import Confetti from 'react-confetti'
 import { useWindowSize } from 'react-use'
+import Header from '@/components/Header'
 import { useDonationStore } from '../../store/donationStore'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-// ─── Stepper ──────────────────────────────────────────────────────────────────
-const Stepper = ({ step }: { step: number }) => (
-  <div className="flex items-center gap-0 mb-7">
-    {[1, 2, 3].map((n, i) => (
-      <div key={n} className="flex items-center flex-1 last:flex-none">
-        <div className="flex items-center gap-1.5">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all
-            ${n < step ? 'bg-green-600 text-white' : n === step ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-400'}`}>
-            {n < step ? '✓' : n}
+// ─── Step Progress Bar (same as review page) ──────────────────────────────────
+const StepProgress = ({ step }: { step: number }) => {
+  const steps = [
+    { n: 1, label: 'Step 1: Choose Amount' },
+    { n: 2, label: 'Step 2: Select Payment Type' },
+    { n: 3, label: 'Step 3: Payment Confirmation' },
+  ]
+  return (
+    <div className="bg-slate-800 py-1">
+      <div className="max-w-screen-lg container mx-auto px-4 sm:px-6 lg:px-36 pt-3 pb-2.5">
+        {/* Mobile */}
+        <nav className="w-full sm:hidden" aria-label="Progress">
+          <div className="flex flex-row flex-nowrap gap-x-4">
+            {steps.map((s) => (
+              <div key={s.n} className={`w-full h-2 rounded-sm mb-1 ${s.n <= step ? 'bg-teal-600' : 'bg-slate-400'}`} />
+            ))}
           </div>
-          <span className={`text-xs font-medium whitespace-nowrap
-            ${n < step ? 'text-green-600' : n === step ? 'text-blue-700' : 'text-slate-400'}`}>
-            {['Amount', 'Review', 'Done'][n - 1]}
-          </span>
-        </div>
-        {i < 2 && (
-          <div className={`flex-1 h-0.5 mx-1 transition-colors ${n < step ? 'bg-green-500' : 'bg-slate-200'}`} />
-        )}
+          <p className="text-base font-medium text-slate-200">{steps[step - 1]?.label}</p>
+        </nav>
+        {/* Desktop */}
+        <nav className="w-full max-sm:hidden" aria-label="Progress">
+          <ol role="list" className="flex space-x-4">
+            {steps.map((s) => (
+              <li key={s.n} className="flex-1">
+                <div className={`w-full h-1.5 rounded-sm mb-1 ${s.n <= step ? 'bg-teal-600' : 'bg-slate-400'}`} />
+                <p className={`text-base font-medium ${s.n <= step ? 'text-slate-200' : 'text-slate-400'}`}>{s.label}</p>
+              </li>
+            ))}
+          </ol>
+        </nav>
       </div>
-    ))}
-  </div>
-)
+    </div>
+  )
+}
 
 // ─── Inner content ────────────────────────────────────────────────────────────
 function StatusContent() {
@@ -53,28 +66,23 @@ function StatusContent() {
   const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
   const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 
-  // Fire confetti only on success, stop after 5 seconds
   const triggerConfetti = () => {
     setShowConfetti(true)
     setTimeout(() => setShowConfetti(false), 5000)
   }
 
   useEffect(() => {
-    const clientSecret   = searchParams.get('payment_intent_client_secret')
+    const clientSecret = searchParams.get('payment_intent_client_secret')
 
-    // ── Case 1: 3DS redirect (India) ─────────────────────────────────────────
+    // ── Case 1: 3DS redirect ──────────────────────────────────────────────────
     if (clientSecret && stripe) {
       stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
         if (!paymentIntent) { setResolvedStatus('failed'); return }
-
         const txId = paymentIntent.id
         setResolvedTxId(txId)
         setTransactionId(txId)
-
         if (paymentIntent.status === 'succeeded') {
-          setStatus('success')
-          setResolvedStatus('success')
-          triggerConfetti()                         // 🎉 fire on 3DS success
+          setStatus('success'); setResolvedStatus('success'); triggerConfetti()
         } else if (['requires_payment_method', 'canceled'].includes(paymentIntent.status)) {
           setStatus('failed'); setResolvedStatus('failed')
         } else {
@@ -88,11 +96,11 @@ function StatusContent() {
     if (status === 'success' || status === 'failed' || status === 'pending') {
       setResolvedStatus(status)
       setResolvedTxId(transactionId || '')
-      if (status === 'success') triggerConfetti()   // 🎉 fire on direct success
+      if (status === 'success') triggerConfetti()
       return
     }
 
-    // ── Case 3: No payment data — send back ───────────────────────────────────
+    // ── Case 3: No payment data ───────────────────────────────────────────────
     if (!donor.name || !donor.email) {
       router.replace('/donate')
     }
@@ -117,7 +125,7 @@ function StatusContent() {
 
   return (
     <>
-      {/* 🎉 Confetti — only fires on success */}
+      {/* 🎉 Confetti */}
       {showConfetti && (
         <Confetti
           width={width}
@@ -177,7 +185,7 @@ function StatusContent() {
           { label: 'Status',         badge: true },
         ].map((row) => (
           <div key={row.label} className="flex justify-between items-center px-4 py-3">
-            <span className="text-xs text-slate-500">{row.label}</span>
+            <span className="text-sm text-slate-500">{row.label}</span>
             {row.badge ? (
               <span className={`text-xs font-semibold px-3 py-0.5 rounded-full
                 ${resolvedStatus === 'failed'
@@ -237,17 +245,13 @@ export default function DonateStatusPage() {
   return (
     <div className="bg-slate-50 min-w-[375px] min-h-screen flex flex-col">
 
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-screen-sm mx-auto h-12 flex items-center px-4">
-          <Link className="flex gap-2 items-center" href="/">
-            <div className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center text-white text-xs font-bold">LA</div>
-            <span className="font-bold text-blue-800 text-base tracking-tight">Lokalads</span>
-          </Link>
-        </div>
+      {/* ── Header + step bar (same as review page) ── */}
+      <header className="border-b border-slate-200 shadow-md">
+        <Header />
+        <StepProgress step={3} />
       </header>
 
       <div className="max-w-screen-sm mx-auto w-full px-4 py-6 flex-1">
-        <Stepper step={3} />
         <Elements stripe={stripePromise}>
           <StatusContent />
         </Elements>
