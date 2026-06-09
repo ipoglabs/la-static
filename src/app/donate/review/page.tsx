@@ -77,7 +77,7 @@ function QrTimer() {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = 'sp' | 'wp' | 'cc'
-type WalletMethod = 'apple-pay' | 'google-pay' | 'paypal' | null
+type WalletMethod = 'apple-pay' | 'google-pay' | null
 
 // ─── Currency options ─────────────────────────────────────────────────────────
 const CURRENCIES = [
@@ -292,7 +292,7 @@ export default function DonateReviewPage() {
                   1-Tap Wallet Payment
                 </h2>
                 <p className="w-10/12 text-slate-700 mb-4">
-                  Pay instantly with Apple Pay, Google Pay, or PayPal. Your wallet handles authentication securely — no card details needed.
+                  Pay instantly with Apple Pay or Google Pay. Your wallet handles authentication securely — no card details needed.
                 </p>
               </div>
             )}
@@ -380,7 +380,7 @@ export default function DonateReviewPage() {
                 </label>
 
                 {/* Google Pay */}
-                <label className={cn('flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer mb-2 transition-all',
+                <label className={cn('flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer mb-4 transition-all',
                   walletMethod === 'google-pay' ? 'border-slate-700 bg-white shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300')}>
                   <input type="radio" name="wallet" checked={walletMethod === 'google-pay'}
                     onChange={() => setWalletMethod('google-pay')} className="sr-only" />
@@ -402,52 +402,24 @@ export default function DonateReviewPage() {
                   </div>
                 </label>
 
-                {/* PayPal */}
-                <label className={cn('flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer mb-4 transition-all',
-                  walletMethod === 'paypal' ? 'border-slate-700 bg-white shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300')}>
-                  <input type="radio" name="wallet" checked={walletMethod === 'paypal'}
-                    onChange={() => setWalletMethod('paypal')} className="sr-only" />
-                  <div className="size-9 rounded-lg flex items-center justify-center flex-none bg-[#003087]">
-                    <svg viewBox="0 0 24 24" fill="white" className="size-5">
-                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.58 2.975-2.477 4.6-5.716 4.6h-2.19c-1.515 0-2.8 1.106-3.034 2.6l-1.12 7.107h2.606c.524 0 .968-.382 1.05-.9l.44-2.782c.082-.518.527-.9 1.05-.9h.668c3.845 0 6.538-1.563 7.374-6.082a5.026 5.026 0 0 0-.48-3.356z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">PayPal</p>
-                    <p className="text-xs text-slate-500">Safe buyer protection included</p>
-                  </div>
-                  <div className={cn('size-4 rounded-full border-2 flex items-center justify-center',
-                    walletMethod === 'paypal' ? 'border-slate-700' : 'border-slate-300')}>
-                    {walletMethod === 'paypal' && <span className="size-2 rounded-full bg-slate-700 block" />}
-                  </div>
-                </label>
-
-              {/* Pay button (shown once a wallet is selected) */}
-              {walletMethod === 'apple-pay' || walletMethod === 'google-pay' ? (
-              clientSecret && (
-              <StripeProvider clientSecret={clientSecret}>
-                        <WalletPayButton
-                          amount={amountRaw}
-                          currency={currency}
-                          onSuccess={handleSuccess}
-                          onError={handleError}
-                        />
-                      </StripeProvider>
-                    )
-                  ) : walletMethod === 'paypal' ? (
-                    <PayPalButton
+                {/* Pay button (shown once a wallet is selected) */}
+                {(walletMethod === 'apple-pay' || walletMethod === 'google-pay') && clientSecret && (
+                  <StripeProvider clientSecret={clientSecret}>
+                    <WalletPayButton
                       amount={amountRaw}
+                      currency={currency}
                       onSuccess={handleSuccess}
                       onError={handleError}
                     />
-                  ) : null}
-                                </div>
-                              )}
+                  </StripeProvider>
+                )}
+              </div>
+            )}
 
             {/* ── CARD PAYMENT — Stripe form panel ────────────────────── */}
             {activeTab === 'cc' && (
               <div className="flex flex-col items-center w-full max-md:px-4">
-    
+
                 {/* Loading */}
                 {loading && (
                   <div className="flex items-center justify-center py-10 gap-3">
