@@ -8,7 +8,6 @@ import StripeProvider from '@/components/StripeProvider'
 import CheckoutForm from '@/components/CheckoutForm'
 import { cn } from '@/lib/utils'
 import WalletPayButton from '@/components/WalletPayButton'
-import { PayPalButtons } from "@paypal/react-paypal-js";
 
 const MONZO_PAYMENT_LINK = 'https://monzo.com/pay/r/lokaladscom-uk-limited_GjsQ9QudO1guTV?from_qr=true'
 
@@ -423,33 +422,38 @@ export default function DonateReviewPage() {
                   </div>
                 </label>
 
-              {/* Pay button (shown once a wallet is selected) */}
-              {walletMethod === 'apple-pay' || walletMethod === 'google-pay' ? (
-              clientSecret && (
-              <StripeProvider clientSecret={clientSecret}>
-<WalletPayButton
-  amount={amountRaw}
-  currency={currency}
-  clientSecret={clientSecret}  
-  onSuccess={handleSuccess}
-  onError={handleError}
-/>
-                      </StripeProvider>
-                    )
-                  ) : walletMethod === 'paypal' ? (
-                    <PayPalButton
-                      amount={amountRaw}
-                      onSuccess={handleSuccess}
-                      onError={handleError}
-                    />
-                  ) : null}
-                                </div>
-                              )}
+                {/* Pay button (shown once a wallet is selected) */}
+                {walletMethod === 'apple-pay' || walletMethod === 'google-pay' ? (
+                  clientSecret && (
+                    <StripeProvider clientSecret={clientSecret}>
+                      <WalletPayButton
+                        amount={amountRaw}
+                        currency={currency}
+                        clientSecret={clientSecret}
+                        onSuccess={handleSuccess}
+                        onError={handleError}
+                      />
+                    </StripeProvider>
+                  )
+                ) : walletMethod === 'paypal' ? (
+                  // TODO: Replace with real PayPal integration
+                  <button
+                    onClick={() => handleSuccess('dummy-paypal-txn-' + Date.now())}
+                    className="w-full bg-[#FFC439] hover:bg-[#f0b429] text-[#003087] font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.58 2.975-2.477 4.6-5.716 4.6h-2.19c-1.515 0-2.8 1.106-3.034 2.6l-1.12 7.107h2.606c.524 0 .968-.382 1.05-.9l.44-2.782c.082-.518.527-.9 1.05-.9h.668c3.845 0 6.538-1.563 7.374-6.082a5.026 5.026 0 0 0-.48-3.356z" />
+                    </svg>
+                    Pay with PayPal
+                  </button>
+                ) : null}
+              </div>
+            )}
 
             {/* ── CARD PAYMENT — Stripe form panel ────────────────────── */}
             {activeTab === 'cc' && (
               <div className="flex flex-col items-center w-full max-md:px-4">
-    
+
                 {/* Loading */}
                 {loading && (
                   <div className="flex items-center justify-center py-10 gap-3">
