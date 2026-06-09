@@ -7,6 +7,7 @@ import { useDonationStore } from '@/app/store/donationStore'
 import StripeProvider from '@/components/StripeProvider'
 import CheckoutForm from '@/components/CheckoutForm'
 import { cn } from '@/lib/utils'
+import WalletPayButton from '@/components/WalletPayButton'
 
 const MONZO_PAYMENT_LINK = 'https://monzo.com/pay/r/lokaladscom-uk-limited_GjsQ9QudO1guTV?from_qr=true'
 
@@ -421,21 +422,27 @@ export default function DonateReviewPage() {
                   </div>
                 </label>
 
-                {/* Pay button (shown once a wallet is selected) */}
-                {walletMethod && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStatus('success')
-                      router.push('/donate/status')
-                    }}
-                    className="w-full px-8 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base font-bold rounded-full transition-colors"
-                  >
-                    Pay with {walletMethod === 'apple-pay' ? 'Apple Pay' : walletMethod === 'google-pay' ? 'Google Pay' : 'PayPal'} — {amount}
-                  </button>
-                )}
-              </div>
-            )}
+              {/* Pay button (shown once a wallet is selected) */}
+              {walletMethod === 'apple-pay' || walletMethod === 'google-pay' ? (
+              clientSecret && (
+              <StripeProvider clientSecret={clientSecret}>
+                        <WalletPayButton
+                          amount={amountRaw}
+                          currency={currency}
+                          onSuccess={handleSuccess}
+                          onError={handleError}
+                        />
+                      </StripeProvider>
+                    )
+                  ) : walletMethod === 'paypal' ? (
+                    <PayPalButton
+                      amount={amountRaw}
+                      onSuccess={handleSuccess}
+                      onError={handleError}
+                    />
+                  ) : null}
+                                </div>
+                              )}
 
             {/* ── CARD PAYMENT — Stripe form panel ────────────────────── */}
             {activeTab === 'cc' && (
