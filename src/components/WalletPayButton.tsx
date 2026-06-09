@@ -86,7 +86,7 @@ export default function WalletPayButton({
       <PaymentRequestButtonElement
         options={{
           paymentRequest: paymentRequest!,
-          style: { paymentRequestButton: { height: '48px', borderRadius: '8px' } },
+          style: { paymentRequestButton: { height: '48px' } },
         }}
       />
       <p className="text-xs text-slate-400 text-center mt-2">
