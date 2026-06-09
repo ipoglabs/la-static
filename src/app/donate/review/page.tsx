@@ -127,10 +127,10 @@ export default function DonateReviewPage() {
     if (activeTab === 'cc') setCurrency('gbp')
   }, [activeTab])
 
-  // Create Stripe PaymentIntent (only for card tab)
+  // Create Stripe PaymentIntent for both cc and wp tabs
   useEffect(() => {
     if (!mounted || !amountRaw || !donorName || !donorEmail) return
-    if (activeTab !== 'cc') return
+    if (activeTab === 'sp') return
     const create = async () => {
       setLoading(true)
       setApiError('')
@@ -186,15 +186,14 @@ export default function DonateReviewPage() {
           <p className="text-slate-600 text-sm sm:text-2xl font-semibold">
             You've chosen to donate <span className="font-bold">{amount}</span>.
           </p>
-           <div className="flex items-center justify-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-7 text-blue-700 shrink-0">
-                    <path d="M4.5 3.75a3 3 0 0 0-3 3v.75h21v-.75a3 3 0 0 0-3-3h-15Z" />
-                    <path fillRule="evenodd" d="M22.5 9.75h-21v7.5a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3v-7.5Zm-18 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-2xl font-bold text-slate-800">{amount}</span>
-                  <span className="text-sm font-normal text-slate-500">{currency.toUpperCase()}</span>
-                </div>
-
+          <div className="flex items-center justify-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-7 text-blue-700 shrink-0">
+              <path d="M4.5 3.75a3 3 0 0 0-3 3v.75h21v-.75a3 3 0 0 0-3-3h-15Z" />
+              <path fillRule="evenodd" d="M22.5 9.75h-21v7.5a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3v-7.5Zm-18 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z" clipRule="evenodd" />
+            </svg>
+            <span className="text-2xl font-bold text-slate-800">{amount}</span>
+            <span className="text-sm font-normal text-slate-500">{currency.toUpperCase()}</span>
+          </div>
         </div>
 
         {/* ── Payment method toggle (3 tabs, original pill style) ────────── */}
@@ -402,12 +401,32 @@ export default function DonateReviewPage() {
                   </div>
                 </label>
 
-                {/* Pay button (shown once a wallet is selected) */}
-                {(walletMethod === 'apple-pay' || walletMethod === 'google-pay') && clientSecret && (
+                {/* Loading spinner while PI is being created */}
+                {loading && (
+                  <div className="flex items-center justify-center py-4 gap-3">
+                    <svg className="animate-spin h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span className="text-sm text-slate-500">Preparing wallet payment...</span>
+                  </div>
+                )}
+
+                {/* API error */}
+                {apiError && !loading && (
+                  <div className="w-full rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-3 flex items-center justify-between gap-2">
+                    <span>{apiError}</span>
+                    <button onClick={() => setRetryKey(k => k + 1)} className="shrink-0 underline text-red-600 font-medium">Retry</button>
+                  </div>
+                )}
+
+                {/* Pay button (shown once a wallet is selected and PI is ready) */}
+                {(walletMethod === 'apple-pay' || walletMethod === 'google-pay') && clientSecret && !loading && (
                   <StripeProvider clientSecret={clientSecret}>
                     <WalletPayButton
                       amount={amountRaw}
                       currency={currency}
+                      clientSecret={clientSecret}
                       onSuccess={handleSuccess}
                       onError={handleError}
                     />

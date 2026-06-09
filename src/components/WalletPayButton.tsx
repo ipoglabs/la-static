@@ -1,16 +1,18 @@
 // components/WalletPayButton.tsx
 'use client'
-import { useStripe, useElements, PaymentRequestButtonElement } from '@stripe/react-stripe-js'
+import { useStripe, PaymentRequestButtonElement } from '@stripe/react-stripe-js'
 import { useEffect, useState } from 'react'
 
 export default function WalletPayButton({
-  amount,        // in pence/cents e.g. 100 for £1
-  currency,      // 'gbp'
+  amount,
+  currency,
+  clientSecret,
   onSuccess,
   onError,
 }: {
   amount: number
   currency: string
+  clientSecret: string
   onSuccess: (txId: string) => void
   onError: (msg: string) => void
 }) {
@@ -37,14 +39,6 @@ export default function WalletPayButton({
     })
 
     pr.on('paymentmethod', async (e) => {
-      // Confirm the PaymentIntent server-side first, then confirm here
-      const res = await fetch('/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, currency }),
-      })
-      const { clientSecret } = await res.json()
-
       const { error, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
         { payment_method: e.paymentMethod.id },
@@ -54,25 +48,35 @@ export default function WalletPayButton({
       if (error) {
         e.complete('fail')
         onError(error.message ?? 'Payment failed')
-      } else {
-        e.complete('success')
-        if (paymentIntent.status === 'requires_action') {
-          await stripe.confirmCardPayment(clientSecret)
-        }
-        onSuccess(paymentIntent.id)
+        return
       }
+
+      e.complete('success')
+
+      if (paymentIntent.status === 'requires_action') {
+        const { error: actionError } = await stripe.confirmCardPayment(clientSecret)
+        if (actionError) {
+          onError(actionError.message ?? 'Authentication failed')
+          return
+        }
+      }
+
+      onSuccess(paymentIntent.id)
     })
-  }, [stripe, amount, currency])
+  }, [stripe, amount, currency, clientSecret])
 
   if (!available) return (
-    <p className="text-xs text-slate-400 text-center">
+    <p className="text-xs text-slate-400 text-center py-2">
       Apple Pay / Google Pay not available on this device or browser.
     </p>
   )
 
   return (
     <PaymentRequestButtonElement
-      options={{ paymentRequest, style: { paymentRequestButton: { height: '48px' } } }}
+      options={{
+        paymentRequest,
+        style: { paymentRequestButton: { height: '48px' } },
+      }}
     />
   )
 }
