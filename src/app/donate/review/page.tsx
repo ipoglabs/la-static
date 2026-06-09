@@ -8,6 +8,7 @@ import StripeProvider from '@/components/StripeProvider'
 import CheckoutForm from '@/components/CheckoutForm'
 import { cn } from '@/lib/utils'
 import WalletPayButton from '@/components/WalletPayButton'
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 const MONZO_PAYMENT_LINK = 'https://monzo.com/pay/r/lokaladscom-uk-limited_GjsQ9QudO1guTV?from_qr=true'
 
