@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// Marks a previously-created pending donation as success/failed, attaching
-// the transaction id once the payment provider confirms it.
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { status, transactionId, amount, currency, method } = await req.json()
 
     const donation = await prisma.donation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(status && { status }),
         ...(transactionId && { transactionId }),
