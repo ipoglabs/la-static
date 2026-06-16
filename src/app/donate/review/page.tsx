@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import QRCode from 'qrcode'
 import Header from '@/components/Header'
@@ -8,8 +8,6 @@ import StripeProvider from '@/components/StripeProvider'
 import CheckoutForm from '@/components/CheckoutForm'
 import { cn } from '@/lib/utils'
 import WalletPayButton from '@/components/WalletPayButton'
-
-const MONZO_PAYMENT_LINK = 'https://monzo.com/pay/r/lokaladscom-uk-limited_GjsQ9QudO1guTV?from_qr=true'
 
 // ─── Step Progress Bar ────────────────────────────────────────────────────────
 const StepProgress = ({ step }: { step: number }) => {
@@ -49,14 +47,14 @@ const StepProgress = ({ step }: { step: number }) => {
 // ─── QR Timer ─────────────────────────────────────────────────────────────────
 const QR_SECONDS = 5 * 60
 
-function QrTimer() {
-  const [secs, setSecs] = useState(QR_SECONDS)
+function QrTimer({ seconds = QR_SECONDS, onExpire }: { seconds?: number; onExpire?: () => void }) {
+  const [secs, setSecs] = useState(seconds)
   useEffect(() => {
-    if (secs <= 0) return
+    if (secs <= 0) { onExpire?.(); return }
     const id = setTimeout(() => setSecs((s) => s - 1), 1000)
     return () => clearTimeout(id)
   }, [secs])
-  const pct = (secs / QR_SECONDS) * 100
+  const pct = (secs / seconds) * 100
   const mm = String(Math.floor(secs / 60)).padStart(2, '0')
   const ss = String(secs % 60).padStart(2, '0')
   const expired = secs === 0
@@ -74,6 +72,60 @@ function QrTimer() {
     </div>
   )
 }
+
+// ─── Scan Pay country config ───────────────────────────────────────────────────
+const SCAN_PAY_COUNTRIES = {
+  SG: {
+    label: 'Singapore',
+    flag: '🇸🇬',
+    badge: 'Stripe',
+    badgeColor: 'bg-indigo-600',
+    currency: 'sgd',
+    symbol: 'S$',
+    timerSeconds: 0,
+    instructions: [
+      'Scan the QR code with your phone camera.',
+      'You will be taken to a secure Stripe-hosted payment page in SGD.',
+      'Pay with your card, Apple Pay, or Google Pay.',
+      'A confirmation will appear once payment is complete.',
+    ],
+    note: 'Opens a secure Stripe checkout page. Accepts card, Apple Pay & Google Pay.',
+  },
+  IN: {
+    label: 'India',
+    flag: '🇮🇳',
+    badge: 'UPI',
+    badgeColor: 'bg-orange-500',
+    currency: 'inr',
+    symbol: '₹',
+    timerSeconds: 300,
+    instructions: [
+      'Open Google Pay, PhonePe, Paytm, BHIM, or any UPI app.',
+      'Tap "Scan QR" and point your camera at the code.',
+      'Verify the amount and complete the UPI payment.',
+      'Keep this page open — confirmation appears automatically.',
+    ],
+    note: 'Works with all UPI apps — GPay, PhonePe, Paytm, BHIM, and more.',
+  },
+  GB: {
+    label: 'United Kingdom',
+    flag: '🇬🇧',
+    badge: 'Stripe',
+    badgeColor: 'bg-indigo-600',
+    currency: 'gbp',
+    symbol: '£',
+    timerSeconds: 0,
+    instructions: [
+      'Scan the QR code with your phone camera.',
+      'You will be taken to a secure Stripe-hosted payment page.',
+      'Pay with your card, Apple Pay, or Google Pay.',
+      'A confirmation will appear on this page once payment is complete.',
+    ],
+    note: 'Opens a secure Stripe checkout page. No UK bank app required.',
+  },
+} as const
+
+type ScanCountry = keyof typeof SCAN_PAY_COUNTRIES
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = 'sp' | 'wp' | 'cc'
@@ -103,19 +155,22 @@ export default function DonateReviewPage() {
   const [loading, setLoading]             = useState(false)
   const [apiError, setApiError]           = useState('')
   const [retryKey, setRetryKey]           = useState(0)
+  const [donationId, setDonationId]       = useState<string | null>(null)
+  const pendingRecordCreated              = useRef(false)
+
+  // ── Scan Pay state ─────────────────────────────────────────────────────────
+  const [scanCountry, setScanCountry]     = useState<ScanCountry>('SG')
+  const [scanQrUrl, setScanQrUrl]         = useState('')
+  const [scanLoading, setScanLoading]     = useState(false)
+  const [scanError, setScanError]         = useState('')
+  const [scanPiId, setScanPiId]           = useState<string | null>(null)
+  const [scanExpired, setScanExpired]     = useState(false)
+  const scanPollRef                       = useRef<NodeJS.Timeout | null>(null)
 
   const currencySymbol = CURRENCIES.find(c => c.value === currency)?.symbol ?? ''
+  const scanCfg = SCAN_PAY_COUNTRIES[scanCountry]
 
   useEffect(() => { setMounted(true) }, [])
-
-  // Generate Monzo QR once on mount
-  useEffect(() => {
-    QRCode.toDataURL(MONZO_PAYMENT_LINK, {
-      width: 240,
-      margin: 1,
-      color: { dark: '#000000', light: '#ffffff' },
-    }).then(setQrDataUrl)
-  }, [])
 
   useEffect(() => {
     if (!mounted) return
@@ -127,10 +182,89 @@ export default function DonateReviewPage() {
     if (activeTab === 'cc') setCurrency('gbp')
   }, [activeTab])
 
-  // Create Stripe PaymentIntent (only for card tab)
+  // ── Generate Stripe QR when Scan Pay tab is active ────────────────────────
   useEffect(() => {
     if (!mounted || !amountRaw || !donorName || !donorEmail) return
-    if (activeTab !== 'cc') return
+    if (activeTab !== 'sp') return
+    generateScanQr()
+    return () => { if (scanPollRef.current) clearInterval(scanPollRef.current) }
+  }, [mounted, amountRaw, activeTab, scanCountry])
+
+  const generateScanQr = async () => {
+    setScanLoading(true)
+    setScanError('')
+    setScanQrUrl('')
+    setScanExpired(false)
+    setScanPiId(null)
+    if (scanPollRef.current) clearInterval(scanPollRef.current)
+
+    try {
+      const res = await fetch('/api/create-qr-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountRaw,
+          country: scanCountry,
+          donorName,
+          email: donorEmail,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create QR payment')
+
+      // IN — UPI: confirm intent server-side, get UPI URI, convert to QR here
+      if (data.method === 'upi') {
+        const confirmRes = await fetch('/api/confirm-upi-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId: data.paymentIntentId }),
+        })
+        const confirmData = await confirmRes.json()
+        if (!confirmRes.ok) throw new Error(confirmData.error || 'UPI confirmation failed')
+        if (confirmData.upiLink) {
+          const url = await QRCode.toDataURL(confirmData.upiLink, {
+            width: 240, margin: 1,
+            color: { dark: '#000000', light: '#ffffff' },
+          })
+          setScanQrUrl(url)
+          setScanPiId(data.paymentIntentId)
+          startScanPoll(data.paymentIntentId)
+        }
+      }
+
+      // GB — Payment Link: convert URL to QR on client
+      else if (data.method === 'payment_link' && data.paymentLinkUrl) {
+        const url = await QRCode.toDataURL(data.paymentLinkUrl, {
+          width: 240, margin: 1,
+          color: { dark: '#000000', light: '#ffffff' },
+        })
+        setScanQrUrl(url)
+        // No server-side polling for GB; user lands on /donate/status after Stripe redirect
+      }
+    } catch (err: any) {
+      setScanError(err.message)
+    } finally {
+      setScanLoading(false)
+    }
+  }
+
+  const startScanPoll = (piId: string) => {
+    scanPollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/check-payment-status?paymentIntentId=${piId}`)
+        const data = await res.json()
+        if (data.status === 'succeeded') {
+          clearInterval(scanPollRef.current!)
+          handleSuccess(piId)
+        }
+      } catch (_) { /* silent */ }
+    }, 3000)
+  }
+
+  // ── Create Stripe PaymentIntent (card + wallet tabs only) ─────────────────
+  useEffect(() => {
+    if (!mounted || !amountRaw || !donorName || !donorEmail) return
+    if (activeTab !== 'cc' && activeTab !== 'wp') return
     const create = async () => {
       setLoading(true)
       setApiError('')
@@ -153,15 +287,62 @@ export default function DonateReviewPage() {
     create()
   }, [mounted, amountRaw, currency, donorName, donorEmail, retryKey, activeTab])
 
+  // ── Create a pending donation record in the database ──────────────────────
+  useEffect(() => {
+    if (!mounted || !amountRaw || !donorName || !donorEmail) return
+    if (pendingRecordCreated.current) return
+    pendingRecordCreated.current = true
+
+    fetch('/api/donations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        donorName,
+        donorEmail,
+        amount: amountRaw,
+        currency,
+        method: activeTab,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.id) setDonationId(data.id)
+      })
+      .catch((err) => console.error('Failed to record pending donation:', err))
+  }, [mounted, amountRaw, donorName, donorEmail])
+
   const handleSuccess = (txId: string) => {
     setTransactionId(txId)
     setStatus('success')
+
+    if (donationId) {
+      fetch(`/api/donations/${donationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'success',
+          transactionId: txId,
+          amount: amountRaw,
+          currency,
+          method: activeTab,
+        }),
+      }).catch((err) => console.error('Failed to mark donation complete:', err))
+    }
+
     router.push('/donate/status')
   }
 
   const handleError = (msg: string) => {
     setStatus('failed')
     setApiError(msg)
+
+    if (donationId) {
+      fetch(`/api/donations/${donationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'failed' }),
+      }).catch((err) => console.error('Failed to mark donation failed:', err))
+    }
   }
 
   if (!mounted) return null
@@ -263,26 +444,66 @@ export default function DonateReviewPage() {
           {/* ── LEFT column (hidden for card tab) ─────────────────────────────── */}
           <div className={cn("flex-1 md:flex-none md:w-1/2 max-md:order-2 max-md:pt-8", activeTab === 'cc' && "hidden")}>
 
-            {/* SCAN PAY — left content */}
+            {/* SCAN PAY — left content: country selector + instructions */}
             {activeTab === 'sp' && (
               <div>
-                <ol className="text-slate-700 list-decimal ml-5 mb-6 space-y-1">
-                  <li>Scan the QR code using your mobile banking app, or save &amp; upload it from your device.</li>
-                  <li>Complete the payment before the QR code expires.</li>
-                  <li>You will be redirected to a confirmation page after payment.</li>
-                </ol>
-                <div className="bg-red-100 rounded-lg py-4 px-5 text-base text-red-700 mb-3" role="alert">
-                  <b>Please stay on this page until your payment is processed.</b>{' '}
-                  If you face issues, check the donation status on the home page after{' '}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4 inline">
-                    <path fillRule="evenodd" d="M1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Zm7.75-4.25a.75.75 0 0 0-1.5 0V8c0 .414.336.75.75.75h3.25a.75.75 0 0 0 0-1.5h-2.5v-3.5Z" clipRule="evenodd" />
-                  </svg>{' '}
-                  <b>30 minutes</b>.
+                {/* Country selector */}
+                <div className="mb-4">
+                  <p className="text-sm font-semibold text-slate-600 mb-2">Select your country:</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {(Object.keys(SCAN_PAY_COUNTRIES) as ScanCountry[]).map(c => (
+                      <button
+                        key={c}
+                        onClick={() => setScanCountry(c)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-all',
+                          scanCountry === c
+                            ? 'bg-slate-700 text-white border-slate-700'
+                            : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+                        )}
+                      >
+                        <span>{SCAN_PAY_COUNTRIES[c].flag}</span>
+                        <span>{SCAN_PAY_COUNTRIES[c].label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {/* Method badge */}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={cn('text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide', scanCfg.badgeColor)}>
+                    {scanCfg.badge}
+                  </span>
+                  <span className="text-slate-500 text-sm">{scanCfg.currency.toUpperCase()}</span>
+                </div>
+
+                {/* Instructions */}
+                <ol className="text-slate-700 list-decimal ml-5 mb-4 space-y-1.5 text-sm">
+                  {scanCfg.instructions.map((step, i) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ol>
+
+                {/* Note */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800 mb-3">
+                  {scanCfg.note}
+                </div>
+
+                {/* Stay on page warning (SG + IN only) */}
+                {scanCountry !== 'GB' && (
+                  <div className="bg-red-100 rounded-lg py-4 px-5 text-base text-red-700" role="alert">
+                    <b>Please stay on this page until your payment is processed.</b>{' '}
+                    If you face issues, check the donation status on the home page after{' '}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="size-4 inline">
+                      <path fillRule="evenodd" d="M1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Zm7.75-4.25a.75.75 0 0 0-1.5 0V8c0 .414.336.75.75.75h3.25a.75.75 0 0 0 0-1.5h-2.5v-3.5Z" clipRule="evenodd" />
+                    </svg>{' '}
+                    <b>30 minutes</b>.
+                  </div>
+                )}
               </div>
             )}
 
-            {/* WALLET PAY — left content */}
+            {/* WALLET PAY — left content (unchanged) */}
             {activeTab === 'wp' && (
               <div className="flex flex-col items-center text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-28 text-blue-700 mb-4">
@@ -306,15 +527,13 @@ export default function DonateReviewPage() {
               <div className="flex flex-col items-center">
                 <div className="flex flex-col items-center px-5 pb-4 mb-3">
                   <p className="text-lg font-semibold text-center mb-3">
-                    Scan with your bank or payment app
+                    Scan with your {scanCfg.badge === 'UPI' ? 'UPI' : 'phone'} app
                   </p>
 
                   {/* QR Code box */}
                   <div className="relative mb-6">
                     <div className="size-56 border-2 border-slate-300 rounded-xl p-1.5 bg-white shadow-sm flex items-center justify-center">
-                      {qrDataUrl ? (
-                        <img src={qrDataUrl} alt="Scan to Pay via Monzo" className="w-full h-full object-contain" />
-                      ) : (
+                      {scanLoading ? (
                         <div className="flex flex-col items-center gap-2">
                           <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -322,39 +541,76 @@ export default function DonateReviewPage() {
                           </svg>
                           <span className="text-xs text-slate-500">Generating QR...</span>
                         </div>
-                      )}
+                      ) : scanError ? (
+                        <div className="text-center px-2">
+                          <p className="text-xs text-red-600 mb-2">{scanError}</p>
+                          <button onClick={generateScanQr} className="text-xs underline text-blue-600">Retry</button>
+                        </div>
+                      ) : scanQrUrl ? (
+                        <img src={scanQrUrl} alt={`Scan to pay via ${scanCfg.badge}`} className="w-full h-full object-contain" />
+                      ) : null}
                     </div>
-                    <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-xs font-bold px-3 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap">
-                      Scan to Pay
-                    </span>
+                    {!scanLoading && !scanError && scanQrUrl && (
+                      <span className={cn('absolute -bottom-3 left-1/2 -translate-x-1/2 text-white text-xs font-bold px-3 py-0.5 rounded-full uppercase tracking-wide whitespace-nowrap', scanCfg.badgeColor)}>
+                        {scanCfg.badge} QR
+                      </span>
+                    )}
                   </div>
 
-                  {/* QR Timer */}
-                  <div className="w-56 mb-3">
-                    <QrTimer />
-                  </div>
+                  {/* QR Timer (SG + IN only) */}
+                  {scanCountry !== 'GB' && !scanLoading && scanQrUrl && !scanExpired && (
+                    <div className="w-56 mb-3">
+                      <QrTimer
+                        seconds={scanCfg.timerSeconds}
+                        onExpire={() => setScanExpired(true)}
+                      />
+                    </div>
+                  )}
+
+                  {/* Expired refresh */}
+                  {scanExpired && (
+                    <button
+                      onClick={generateScanQr}
+                      className="mb-3 text-sm text-blue-700 underline font-medium"
+                    >
+                      ↻ Generate new QR
+                    </button>
+                  )}
+
+                  {/* Polling indicator (SG + IN) */}
+                  {scanPiId && !scanExpired && (
+                    <div className="mb-3 flex items-center gap-1.5 text-xs text-slate-400">
+                      <span className="relative flex size-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full size-2 bg-teal-500" />
+                      </span>
+                      Waiting for payment confirmation...
+                    </div>
+                  )}
                 </div>
 
-                <button
-                  disabled={!qrDataUrl}
-                  onClick={() => {
-                    const link = document.createElement('a')
-                    link.href = qrDataUrl
-                    link.download = 'lokalads-donation-qr.png'
-                    link.click()
-                  }}
-                  className="bg-blue-800 disabled:opacity-50 rounded-md text-sm text-white flex items-center gap-3 px-4 py-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4">
-                    <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
-                    <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
-                  </svg>
-                  <span>Download QR Code</span>
-                </button>
+                {/* Download button */}
+                {scanQrUrl && !scanLoading && !scanExpired && (
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a')
+                      link.href = scanQrUrl
+                      link.download = `lokalads-${scanCfg.badge.toLowerCase()}-qr.png`
+                      link.click()
+                    }}
+                    className="bg-blue-800 disabled:opacity-50 rounded-md text-sm text-white flex items-center gap-3 px-4 py-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4">
+                      <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+                      <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+                    </svg>
+                    <span>Download QR Code</span>
+                  </button>
+                )}
               </div>
             )}
 
-            {/* ── WALLET PAY — wallet options panel ───────────────────── */}
+            {/* ── WALLET PAY — wallet options panel (unchanged) ───────────────────── */}
             {activeTab === 'wp' && (
               <div className="flex flex-col gap-0 max-md:px-4">
                 <p className="text-sm text-slate-500 mb-4 text-center">Choose your preferred wallet:</p>
@@ -450,7 +706,7 @@ export default function DonateReviewPage() {
               </div>
             )}
 
-            {/* ── CARD PAYMENT — Stripe form panel ────────────────────── */}
+            {/* ── CARD PAYMENT — Stripe form panel (unchanged) ────────────────────── */}
             {activeTab === 'cc' && (
               <div className="flex flex-col items-center w-full max-md:px-4">
 

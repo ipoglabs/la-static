@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Donation {
+  id            String   @id @default(cuid())
+
+  // Donor details
+  donorName     String
+  donorEmail    String
+
+  // Donation details
+  amount        Int      // store in the smallest currency unit (e.g. pence, cents)
+  currency      String   // 'gbp' | 'inr' | 'sgd'
+  method        String   // 'cc' (card) | 'wp' (wallet) | 'sp' (scan/QR)
+
+  // Lifecycle
+  status        String   @default("pending") // pending | success | failed
+  transactionId String?  @unique
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([donorEmail])
+  @@index([status])
+}
