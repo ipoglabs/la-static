@@ -47,12 +47,12 @@ const COUNTRY_CONFIG = {
     badge: 'Stripe',
     badgeColor: 'bg-indigo-600',
     instructions: [
-      'Scan the QR code with your phone camera.',
-      'You will be taken to a Stripe-hosted payment page.',
-      'Pay securely with your card, Apple Pay, or Google Pay.',
-      'A confirmation will appear on this page once done.',
+      "Scan the QR code with your phone camera.",
+      "You will be taken to a Stripe-hosted payment page.",
+      "Pay securely with your card, Apple Pay, or Google Pay.",
+      "A confirmation will appear on this page once done.",
     ],
-    note: 'Opens a secure Stripe checkout page. No UK bank app required.',
+    note: "Opens a secure Stripe checkout page. No UK bank app required.",
   },
 } as const
 
