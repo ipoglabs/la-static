@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 // the transaction id once the payment provider confirms it.
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { status, transactionId, amount, currency, method } = await req.json()
