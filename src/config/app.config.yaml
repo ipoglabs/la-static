@@ -1,0 +1,21 @@
+# Non-secret app configuration.
+# Secrets (API keys, DB URLs) stay in .env — see .env.example.
+
+cookies:
+  countryCookie: countryContext
+  pendingCookie: countryPending
+  cookieMaxAgeSeconds: 2592000   # 30 days
+  pendingMaxAgeSeconds: 300      # 5 minutes — bridges first load only
+
+ipDetection:
+  url: https://ipinfo.io/json
+  timeoutMs: 5000
+
+# Countries this app currently serves
+supportedCountryCodes:
+  - SG
+  - IN
+  - US
+  - GB
+  - AU
+  - MY

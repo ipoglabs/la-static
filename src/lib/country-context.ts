@@ -1,16 +1,18 @@
-export const COUNTRY_COOKIE   = "countryContext";
-export const PENDING_COOKIE   = "countryPending";
-export const COOKIE_MAX_AGE   = 60 * 60 * 24 * 30; // 30 days
-export const PENDING_MAX_AGE  = 60 * 5;             // 5 min – bridges first load only
+import appConfig from "@/config/app.config.yaml";
+
+export const COUNTRY_COOKIE  = appConfig.cookies.countryCookie as string;
+export const PENDING_COOKIE  = appConfig.cookies.pendingCookie as string;
+export const COOKIE_MAX_AGE  = appConfig.cookies.cookieMaxAgeSeconds as number;
+export const PENDING_MAX_AGE = appConfig.cookies.pendingMaxAgeSeconds as number;
 
 // Detection config
-export const IPINFO_URL         = "https://ipinfo.io/json";
-export const DETECTION_TIMEOUT  = 5_000;             // 5 seconds
+export const IPINFO_URL        = appConfig.ipDetection.url as string;
+export const DETECTION_TIMEOUT = appConfig.ipDetection.timeoutMs as number;
 
 // Countries this app serves
-export const SUPPORTED_CODES = ["SG", "IN", "US", "GB", "AU", "MY"] as const;
-export type  SupportedCountry = (typeof SUPPORTED_CODES)[number];
+export const SUPPORTED_CODES = appConfig.supportedCountryCodes as readonly string[];
+export type  SupportedCountry = string;
 
 export function isSupportedCountry(code: string): code is SupportedCountry {
-  return (SUPPORTED_CODES as readonly string[]).includes(code);
+  return SUPPORTED_CODES.includes(code);
 }

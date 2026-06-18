@@ -1,0 +1,324 @@
+diff --git a/next.config.js b/next.config.js
+index 96c4c06..c802228 100644
+--- a/next.config.js
++++ b/next.config.js
+@@ -8,6 +8,21 @@ const nextConfig = {
+       },
+     ],
+   },
++  // Lets us `import config from "@/config/whatever.yaml"` and get a
++  // parsed JS object, bundled at build time (Edge-runtime safe — no
++  // runtime fs reads, so this also works from middleware.ts).
++  turbopack: {
++    rules: {
++      "*.yaml": {
++        loaders: ["yaml-loader"],
++        as: "*.js",
++      },
++      "*.yml": {
++        loaders: ["yaml-loader"],
++        as: "*.js",
++      },
++    },
++  },
+ };
+ 
+ module.exports = nextConfig;
+diff --git a/package-lock.json b/package-lock.json
+index dfcef8c..380482e 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -45,7 +45,8 @@
+         "autoprefixer": "^10.0.1",
+         "postcss": "^8",
+         "tailwindcss": "^4.0.0",
+-        "typescript": "^5"
++        "typescript": "^5",
++        "yaml-loader": "^0.9.0"
+       }
+     },
+     "node_modules/@alloc/quick-lru": {
+@@ -6009,6 +6010,13 @@
+         "node": ">=18"
+       }
+     },
++    "node_modules/javascript-stringify": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/javascript-stringify/-/javascript-stringify-2.1.0.tgz",
++      "integrity": "sha512-JVAfqNPTvNq3sB/VHQJAFxN/sPgKnsKrCwyRt15zwNCdrMMJDdcEOdubuy+DuJYYdm0ox1J4uzEuYKkN+9yhVg==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/jiti": {
+       "version": "2.7.0",
+       "resolved": "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz",
+@@ -9304,6 +9312,36 @@
+       "integrity": "sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==",
+       "license": "ISC"
+     },
++    "node_modules/yaml": {
++      "version": "2.9.0",
++      "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.0.tgz",
++      "integrity": "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==",
++      "dev": true,
++      "license": "ISC",
++      "bin": {
++        "yaml": "bin.mjs"
++      },
++      "engines": {
++        "node": ">= 14.6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/eemeli"
++      }
++    },
++    "node_modules/yaml-loader": {
++      "version": "0.9.0",
++      "resolved": "https://registry.npmjs.org/yaml-loader/-/yaml-loader-0.9.0.tgz",
++      "integrity": "sha512-N0bPfDR42qCruELfmpF6Q8XnDu1elTULGjvVn7u6rsfDa8WhlmJbjXQRh+x5TGmpOqw8R9qfiUgc3aKP+8Hd4w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "javascript-stringify": "^2.0.1",
++        "yaml": "^2.0.0"
++      },
++      "engines": {
++        "node": ">= 20"
++      }
++    },
+     "node_modules/yargs": {
+       "version": "17.7.2",
+       "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
+diff --git a/package.json b/package.json
+index bbc4509..fcb00d4 100644
+--- a/package.json
++++ b/package.json
+@@ -46,6 +46,7 @@
+     "autoprefixer": "^10.0.1",
+     "postcss": "^8",
+     "tailwindcss": "^4.0.0",
+-    "typescript": "^5"
++    "typescript": "^5",
++    "yaml-loader": "^0.9.0"
+   }
+ }
+diff --git a/src/config/app.config.yaml b/src/config/app.config.yaml
+new file mode 100644
+index 0000000..369a194
+--- /dev/null
++++ b/src/config/app.config.yaml
+@@ -0,0 +1,21 @@
++# Non-secret app configuration.
++# Secrets (API keys, DB URLs) stay in .env — see .env.example.
++
++cookies:
++  countryCookie: countryContext
++  pendingCookie: countryPending
++  cookieMaxAgeSeconds: 2592000   # 30 days
++  pendingMaxAgeSeconds: 300      # 5 minutes — bridges first load only
++
++ipDetection:
++  url: https://ipinfo.io/json
++  timeoutMs: 5000
++
++# Countries this app currently serves
++supportedCountryCodes:
++  - SG
++  - IN
++  - US
++  - GB
++  - AU
++  - MY
+diff --git a/src/config/countries.yaml b/src/config/countries.yaml
+new file mode 100644
+index 0000000..38f8e0f
+--- /dev/null
++++ b/src/config/countries.yaml
+@@ -0,0 +1,105 @@
++countries:
++  - code: SG
++    name: Singapore
++    dial: "65"
++    flag: "🇸🇬"
++    minLen: 8
++    maxLen: 8
++    currency: SGD
++    currencySymbol: S$
++  - code: IN
++    name: India
++    dial: "91"
++    flag: "🇮🇳"
++    minLen: 10
++    maxLen: 10
++    currency: INR
++    currencySymbol: ₹
++  - code: GB
++    name: UK
++    dial: "44"
++    flag: "🇬🇧"
++    minLen: 10
++    maxLen: 10
++    currency: GBP
++    currencySymbol: £
++  - code: US
++    name: USA
++    dial: "1"
++    flag: "🇺🇸"
++    minLen: 10
++    maxLen: 10
++    currency: USD
++    currencySymbol: $
++  - code: AU
++    name: Australia
++    dial: "61"
++    flag: "🇦🇺"
++    minLen: 9
++    maxLen: 9
++    currency: AUD
++    currencySymbol: A$
++  - code: MY
++    name: Malaysia
++    dial: "60"
++    flag: "🇲🇾"
++    minLen: 9
++    maxLen: 10
++    currency: MYR
++    currencySymbol: RM
++  - code: CA
++    name: Canada
++    dial: "1"
++    flag: "🇨🇦"
++    minLen: 10
++    maxLen: 10
++    currency: CAD
++    currencySymbol: C$
++  - code: NZ
++    name: New Zealand
++    dial: "64"
++    flag: "🇳🇿"
++    minLen: 9
++    maxLen: 9
++    currency: NZD
++    currencySymbol: NZ$
++  - code: CH
++    name: Switzerland
++    dial: "41"
++    flag: "🇨🇭"
++    minLen: 9
++    maxLen: 9
++    currency: CHF
++    currencySymbol: Fr
++  - code: FR
++    name: France
++    dial: "33"
++    flag: "🇫🇷"
++    minLen: 9
++    maxLen: 9
++    currency: EUR
++    currencySymbol: €
++  - code: AE
++    name: UAE
++    dial: "971"
++    flag: "🇦🇪"
++    minLen: 9
++    maxLen: 9
++    currency: AED
++    currencySymbol: AED
++  - code: DE
++    name: Germany
++    dial: "49"
++    flag: "🇩🇪"
++    minLen: 10
++    maxLen: 12
++    currency: EUR
++    currencySymbol: €
++  - code: AT
++    name: Austria
++    dial: "43"
++    flag: "🇦🇹"
++    minLen: 9
++    maxLen: 10
++    currency: EUR
++    currencySymbol: €
+diff --git a/src/lib/country-context.ts b/src/lib/country-context.ts
+index 6b41938..e61ef11 100644
+--- a/src/lib/country-context.ts
++++ b/src/lib/country-context.ts
+@@ -1,16 +1,18 @@
+-export const COUNTRY_COOKIE   = "countryContext";
+-export const PENDING_COOKIE   = "countryPending";
+-export const COOKIE_MAX_AGE   = 60 * 60 * 24 * 30; // 30 days
+-export const PENDING_MAX_AGE  = 60 * 5;             // 5 min – bridges first load only
++import appConfig from "@/config/app.config.yaml";
++
++export const COUNTRY_COOKIE  = appConfig.cookies.countryCookie as string;
++export const PENDING_COOKIE  = appConfig.cookies.pendingCookie as string;
++export const COOKIE_MAX_AGE  = appConfig.cookies.cookieMaxAgeSeconds as number;
++export const PENDING_MAX_AGE = appConfig.cookies.pendingMaxAgeSeconds as number;
+ 
+ // Detection config
+-export const IPINFO_URL         = "https://ipinfo.io/json";
+-export const DETECTION_TIMEOUT  = 5_000;             // 5 seconds
++export const IPINFO_URL        = appConfig.ipDetection.url as string;
++export const DETECTION_TIMEOUT = appConfig.ipDetection.timeoutMs as number;
+ 
+ // Countries this app serves
+-export const SUPPORTED_CODES = ["SG", "IN", "US", "GB", "AU", "MY"] as const;
+-export type  SupportedCountry = (typeof SUPPORTED_CODES)[number];
++export const SUPPORTED_CODES = appConfig.supportedCountryCodes as readonly string[];
++export type  SupportedCountry = string;
+ 
+ export function isSupportedCountry(code: string): code is SupportedCountry {
+-  return (SUPPORTED_CODES as readonly string[]).includes(code);
++  return SUPPORTED_CODES.includes(code);
+ }
+diff --git a/src/lib/data/countries.ts b/src/lib/data/countries.ts
+index 82f02ff..eda24ca 100644
+--- a/src/lib/data/countries.ts
++++ b/src/lib/data/countries.ts
+@@ -1,17 +1,14 @@
+-export const COUNTRIES = [
+-  { code: "SG", name: "Singapore",   dial: "65",  flag: "🇸🇬", minLen: 8,  maxLen: 8,  currency: "SGD", currencySymbol: "S$"  },
+-  { code: "IN", name: "India",       dial: "91",  flag: "🇮🇳", minLen: 10, maxLen: 10, currency: "INR", currencySymbol: "₹"   },
+-  { code: "GB", name: "UK",          dial: "44",  flag: "🇬🇧", minLen: 10, maxLen: 10, currency: "GBP", currencySymbol: "£"   },
+-  { code: "US", name: "USA",         dial: "1",   flag: "🇺🇸", minLen: 10, maxLen: 10, currency: "USD", currencySymbol: "$"   },
+-  { code: "AU", name: "Australia",   dial: "61",  flag: "🇦🇺", minLen: 9,  maxLen: 9,  currency: "AUD", currencySymbol: "A$"  },
+-  { code: "MY", name: "Malaysia",    dial: "60",  flag: "🇲🇾", minLen: 9,  maxLen: 10, currency: "MYR", currencySymbol: "RM"  },
+-  { code: "CA", name: "Canada",      dial: "1",   flag: "🇨🇦", minLen: 10, maxLen: 10, currency: "CAD", currencySymbol: "C$"  },
+-  { code: "NZ", name: "New Zealand", dial: "64",  flag: "🇳🇿", minLen: 9,  maxLen: 9,  currency: "NZD", currencySymbol: "NZ$" },
+-  { code: "CH", name: "Switzerland", dial: "41",  flag: "🇨🇭", minLen: 9,  maxLen: 9,  currency: "CHF", currencySymbol: "Fr"  },
+-  { code: "FR", name: "France",      dial: "33",  flag: "🇫🇷", minLen: 9,  maxLen: 9,  currency: "EUR", currencySymbol: "€"   },
+-  { code: "AE", name: "UAE",         dial: "971", flag: "🇦🇪", minLen: 9,  maxLen: 9,  currency: "AED", currencySymbol: "AED" },
+-  { code: "DE", name: "Germany",     dial: "49",  flag: "🇩🇪", minLen: 10, maxLen: 12, currency: "EUR", currencySymbol: "€"   },
+-  { code: "AT", name: "Austria",     dial: "43",  flag: "🇦🇹", minLen: 9,  maxLen: 10, currency: "EUR", currencySymbol: "€"   },
+-] as const;
++import countriesConfig from "@/config/countries.yaml";
+ 
+-export type Country = (typeof COUNTRIES)[number];
++export type Country = {
++  code: string;
++  name: string;
++  dial: string;
++  flag: string;
++  minLen: number;
++  maxLen: number;
++  currency: string;
++  currencySymbol: string;
++};
++
++export const COUNTRIES: Country[] = countriesConfig.countries;
+diff --git a/src/types/yaml.d.ts b/src/types/yaml.d.ts
+new file mode 100644
+index 0000000..0e466a6
+--- /dev/null
++++ b/src/types/yaml.d.ts
+@@ -0,0 +1,9 @@
++declare module "*.yaml" {
++  const content: any;
++  export default content;
++}
++
++declare module "*.yml" {
++  const content: any;
++  export default content;
++}
