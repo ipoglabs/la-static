@@ -98,7 +98,9 @@ const SCAN_PAY_COUNTRIES = {
     badgeColor: 'bg-orange-500',
     currency: 'inr',
     symbol: '₹',
-    timerSeconds: 300,
+    // Razorpay's QR `close_by` must be at least 15 minutes in the future,
+    // so the on-screen timer is set to match the QR's actual expiry.
+    timerSeconds: 900,
     instructions: [
       'Open Google Pay, PhonePe, Paytm, BHIM, or any UPI app.',
       'Tap "Scan QR" and point your camera at the code.',
@@ -130,6 +132,7 @@ type ScanCountry = keyof typeof SCAN_PAY_COUNTRIES
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Tab = 'sp' | 'wp' | 'cc'
 type WalletMethod = 'apple-pay' | 'google-pay' | 'paypal' | null
+type ScanProvider = 'razorpay' | 'stripe'
 
 // ─── Currency options ─────────────────────────────────────────────────────────
 const CURRENCIES = [
@@ -182,7 +185,7 @@ export default function DonateReviewPage() {
     if (activeTab === 'cc') setCurrency('gbp')
   }, [activeTab])
 
-  // ── Generate Stripe QR when Scan Pay tab is active ────────────────────────
+  // ── Generate QR when Scan Pay tab is active ───────────────────────────────
   useEffect(() => {
     if (!mounted || !amountRaw || !donorName || !donorEmail) return
     if (activeTab !== 'sp') return
@@ -212,34 +215,21 @@ export default function DonateReviewPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create QR payment')
 
-      // IN — UPI: confirm intent server-side, get UPI URI, convert to QR here
-      if (data.method === 'upi') {
-        const confirmRes = await fetch('/api/confirm-upi-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId: data.paymentIntentId }),
-        })
-        const confirmData = await confirmRes.json()
-        if (!confirmRes.ok) throw new Error(confirmData.error || 'UPI confirmation failed')
-        if (confirmData.upiLink) {
-          const url = await QRCode.toDataURL(confirmData.upiLink, {
-            width: 240, margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-          })
-          setScanQrUrl(url)
-          setScanPiId(data.paymentIntentId)
-          startScanPoll(data.paymentIntentId)
-        }
+      // IN — Razorpay UPI QR: image_url comes ready-made, no client-side QR generation needed
+      if (data.method === 'razorpay_qr') {
+        setScanQrUrl(data.qrImageUrl)
+        setScanPiId(data.qrCodeId)
+        startScanPoll(data.qrCodeId, 'razorpay')
       }
 
-      // GB — Payment Link: convert URL to QR on client
+      // GB / SG — Stripe Payment Link: convert URL to QR on client
       else if (data.method === 'payment_link' && data.paymentLinkUrl) {
         const url = await QRCode.toDataURL(data.paymentLinkUrl, {
           width: 240, margin: 1,
           color: { dark: '#000000', light: '#ffffff' },
         })
         setScanQrUrl(url)
-        // No server-side polling for GB; user lands on /donate/status after Stripe redirect
+        // No server-side polling for GB/SG; user lands on /donate/status after Stripe redirect
       }
     } catch (err: any) {
       setScanError(err.message)
@@ -248,14 +238,21 @@ export default function DonateReviewPage() {
     }
   }
 
-  const startScanPoll = (piId: string) => {
+  const startScanPoll = (trackingId: string, provider: ScanProvider) => {
+    const endpoint = provider === 'razorpay'
+      ? `/api/check-razorpay-qr-status?qrCodeId=${trackingId}`
+      : `/api/check-payment-status?paymentIntentId=${trackingId}`
+
     scanPollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/check-payment-status?paymentIntentId=${piId}`)
+        const res = await fetch(endpoint)
         const data = await res.json()
         if (data.status === 'succeeded') {
           clearInterval(scanPollRef.current!)
-          handleSuccess(piId)
+          handleSuccess(data.paymentId || trackingId)
+        } else if (data.status === 'expired') {
+          clearInterval(scanPollRef.current!)
+          setScanExpired(true)
         }
       } catch (_) { /* silent */ }
     }, 3000)
@@ -577,7 +574,7 @@ export default function DonateReviewPage() {
                     </button>
                   )}
 
-                  {/* Polling indicator (SG + IN) */}
+                  {/* Polling indicator (IN via Razorpay) */}
                   {scanPiId && !scanExpired && (
                     <div className="mb-3 flex items-center gap-1.5 text-xs text-slate-400">
                       <span className="relative flex size-2">
@@ -592,11 +589,28 @@ export default function DonateReviewPage() {
                 {/* Download button */}
                 {scanQrUrl && !scanLoading && !scanExpired && (
                   <button
-                    onClick={() => {
-                      const link = document.createElement('a')
-                      link.href = scanQrUrl
-                      link.download = `lokalads-${scanCfg.badge.toLowerCase()}-qr.png`
-                      link.click()
+                    onClick={async () => {
+                      try {
+                        if (scanCfg.badge === 'UPI') {
+                          // Razorpay's QR image is hosted remotely — fetch as a blob for a reliable download
+                          const resp = await fetch(scanQrUrl)
+                          const blob = await resp.blob()
+                          const blobUrl = URL.createObjectURL(blob)
+                          const link = document.createElement('a')
+                          link.href = blobUrl
+                          link.download = 'lokalads-upi-qr.png'
+                          link.click()
+                          URL.revokeObjectURL(blobUrl)
+                        } else {
+                          const link = document.createElement('a')
+                          link.href = scanQrUrl
+                          link.download = `lokalads-${scanCfg.badge.toLowerCase()}-qr.png`
+                          link.click()
+                        }
+                      } catch {
+                        // CORS fallback — just open the QR in a new tab
+                        window.open(scanQrUrl, '_blank')
+                      }
                     }}
                     className="bg-blue-800 disabled:opacity-50 rounded-md text-sm text-white flex items-center gap-3 px-4 py-2"
                   >

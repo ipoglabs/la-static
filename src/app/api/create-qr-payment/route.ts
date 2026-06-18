@@ -2,11 +2,12 @@
 //
 // Creates QR-based payments:
 //   SG  → Stripe Payment Link QR (currency: sgd) — PayNow requires SG Stripe account
-//   IN  → UPI     (currency: inr)  — covers GPay, PhonePe, Paytm, BHIM
+//   IN  → Razorpay UPI QR (currency: inr)  — covers GPay, PhonePe, Paytm, BHIM
 //   GB  → Stripe Payment Link QR  (currency: gbp)
 //
 import Stripe from 'stripe'
 import { NextResponse } from 'next/server'
+import { razorpay } from '@/lib/razorpay'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-05-27.dahlia',
@@ -53,21 +54,28 @@ export async function POST(req: Request) {
       })
     }
 
-    // ── India: UPI ───────────────────────────────────────────────────────────
-    // UPI covers Google Pay (IN), PhonePe, Paytm, BHIM, and all UPI apps.
+    // ── India: Razorpay UPI QR ────────────────────────────────────────────────
+    // Replaces the old Stripe `payment_method_types: ['upi']` PaymentIntent —
+    // Razorpay is the more standard gateway for receiving INR/UPI in India.
+    // Covers Google Pay, PhonePe, Paytm, BHIM, and all UPI apps via QR scan.
     if (country === 'IN') {
-      const intent = await stripe.paymentIntents.create({
-        amount: amountInSmallestUnit,
-        currency: 'inr',
-        payment_method_types: ['upi'],
-        metadata: { donorName: donorName || 'Anonymous', email: email || '', country: 'IN' },
+      const qrCode = await razorpay.qrCode.create({
+        type: 'upi_qr',
+        name: `Donation-${Date.now()}`,
+        usage: 'single_use',
+        fixed_amount: true,
+        payment_amount: amountInSmallestUnit,
         description: `Lokalads donation from ${donorName || 'Anonymous'}`,
+        // Razorpay requires close_by to be at least 15 minutes in the future
+        close_by: Math.floor(Date.now() / 1000) + 15 * 60,
+        notes: { donorName: donorName || 'Anonymous', email: email || '', country: 'IN' },
       })
 
       return NextResponse.json({
-        method: 'upi',
-        clientSecret: intent.client_secret,
-        paymentIntentId: intent.id,
+        method: 'razorpay_qr',
+        qrCodeId: qrCode.id,
+        qrImageUrl: qrCode.image_url, // ready-to-use hosted PNG, no client-side QR generation needed
+        closeBy: qrCode.close_by,
       })
     }
 
@@ -98,6 +106,7 @@ export async function POST(req: Request) {
     }
   } catch (err: any) {
     console.error('QR payment error:', err)
-    return NextResponse.json({ error: err.message || 'QR payment creation failed' }, { status: 500 })
+    const status = err?.statusCode === 401 ? 401 : 500
+    return NextResponse.json({ error: err?.error?.description || err.message || 'QR payment creation failed' }, { status })
   }
 }
