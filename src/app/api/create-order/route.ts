@@ -1,54 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
-import { razorpay } from "@/lib/razorpay";
+// app/api/create-order/route.ts
+//
+// Creates a Razorpay order for the Wallet Pay / Card Pay tabs (India only).
+// RazorpayCheckoutButton converts the donation amount to paise client-side
+// before calling this route, so `amount` here is already in the smallest
+// currency unit — do not multiply again.
 
-export async function POST(req: NextRequest) {
+import { NextResponse } from 'next/server'
+import { razorpay } from '@/lib/razorpay'
+
+export async function POST(req: Request) {
   try {
-    // ✅ Safe JSON parsing (prevents crashes)
-    let body: any = {};
+    const { amount, currency = 'INR', receipt } = await req.json()
 
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body" },
-        { status: 400 }
-      );
+    if (!amount || amount < 1) {
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
 
-    const amount = Number(body.amount);
-
-    // ✅ Validation
-    if (!amount || amount < 100) {
-      return NextResponse.json(
-        { error: "Minimum amount is 100 paise (₹1)" },
-        { status: 400 }
-      );
-    }
-
-    // ✅ Create Razorpay order
     const order = await razorpay.orders.create({
-      amount,
-      currency: body.currency || "INR",
-      receipt: body.receipt || `receipt_${Date.now()}`,
-    });
+      amount: Math.round(amount), // already in paise — see note above
+      currency,
+      receipt: receipt || `receipt_${Date.now()}`,
+    })
 
     return NextResponse.json({
       order_id: order.id,
       amount: order.amount,
       currency: order.currency,
-    });
+    })
   } catch (err: any) {
-    console.error("Create Order Error:", err);
-
+    console.error('Razorpay create-order error:', err)
+    const status = err?.statusCode === 401 ? 401 : 500
     return NextResponse.json(
-      {
-        error:
-          err?.error?.description ||
-          err?.message ||
-          "Order creation failed",
-      },
-      { status: 500 }
-    );
+      { error: err?.error?.description || err.message || 'Order creation failed' },
+      { status }
+    )
   }
 }
