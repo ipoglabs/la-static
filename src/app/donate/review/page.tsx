@@ -152,6 +152,9 @@ export default function DonateReviewPage() {
   const donorName    = donor?.name    ?? ''
   const donorEmail   = donor?.email   ?? ''
   const donorMessage = donor?.message ?? ''
+  const description   = donorMessage.trim()
+    ? `Donation Lokalads - ${donorMessage.trim()}`
+    : 'Donation Lokalads'
 
   const [mounted, setMounted]             = useState(false)
   const [activeTab, setActiveTab]         = useState<Tab>('cc')
@@ -322,6 +325,7 @@ export default function DonateReviewPage() {
         amount: amountRaw,
         currency,
         method: activeTab,
+        description,
       }),
     })
       .then((res) => res.json())
@@ -330,6 +334,16 @@ export default function DonateReviewPage() {
       })
       .catch((err) => console.error('Failed to record pending donation:', err))
   }, [mounted, amountRaw, donorName, donorEmail])
+
+  // ── Keep the pending record's method/currency synced as donor changes tabs ──
+  useEffect(() => {
+    if (!donationId) return
+    fetch(`/api/donations/${donationId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ method: activeTab, currency }),
+    }).catch((err) => console.error('Failed to sync donation method/currency:', err))
+  }, [donationId, activeTab, currency])
 
   const handleSuccess = (txId: string) => {
     setTransactionId(txId)

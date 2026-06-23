@@ -7,6 +7,7 @@ type Donation = {
   id: string
   donorName: string
   donorEmail: string
+  description: string | null
   amount: number
   currency: string
   method: string
@@ -60,7 +61,8 @@ export default function DonationsTable({ donations }: { donations: Donation[] })
       return (
         d.donorName.toLowerCase().includes(q) ||
         d.donorEmail.toLowerCase().includes(q) ||
-        (d.transactionId ?? '').toLowerCase().includes(q)
+        (d.transactionId ?? '').toLowerCase().includes(q) ||
+        (d.description ?? '').toLowerCase().includes(q)
       )
     })
   }, [donations, query, statusFilter])
@@ -73,7 +75,7 @@ export default function DonationsTable({ donations }: { donations: Donation[] })
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, email, or transaction ID"
+          placeholder="Search by name, email, transaction ID, or message"
           className="flex-1 min-w-[220px] rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent"
         />
         <div className="flex gap-1.5">
@@ -103,6 +105,7 @@ export default function DonationsTable({ donations }: { donations: Donation[] })
               <th className="px-5 py-3">Amount</th>
               <th className="px-5 py-3">Method</th>
               <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3">Description</th>
               <th className="px-5 py-3">Transaction ID</th>
               <th className="px-5 py-3">Date</th>
             </tr>
@@ -110,7 +113,7 @@ export default function DonationsTable({ donations }: { donations: Donation[] })
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                <td colSpan={7} className="px-5 py-10 text-center text-slate-400">
                   No donations match your search.
                 </td>
               </tr>
@@ -136,6 +139,15 @@ export default function DonationsTable({ donations }: { donations: Donation[] })
                     >
                       {d.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-slate-600 max-w-[220px]">
+                    {d.description ? (
+                      <span className="line-clamp-2" title={d.description}>
+                        {d.description}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
                   </td>
                   <td className="px-5 py-3.5 font-mono text-xs text-slate-500">
                     {d.transactionId ?? '—'}

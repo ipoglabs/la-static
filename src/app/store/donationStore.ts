@@ -10,6 +10,7 @@ export type DonationStatus = 'idle' | 'pending' | 'success' | 'failed'
 export interface DonorInfo {
   name: string
   email: string
+  message?: string
 }
 
 export interface DonationState {

@@ -14,6 +14,7 @@ model Donation {
   // Donor details
   donorName     String
   donorEmail    String
+  description   String?  // optional donor message / note
 
   // Donation details
   amount        Int      // store in the smallest currency unit (e.g. pence, cents)

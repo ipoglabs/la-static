@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 // and how much they intend to give — before payment has actually completed.
 export async function POST(req: NextRequest) {
   try {
-    const { donorName, donorEmail, amount, currency, method } = await req.json()
+    const { donorName, donorEmail, amount, currency, method, description } = await req.json()
 
     if (!donorName || !donorEmail || !amount || !currency) {
       return NextResponse.json(
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
         amount,
         currency,
         method: method ?? 'unknown',
+        description: description?.trim() || null,
         status: 'pending',
       },
     })

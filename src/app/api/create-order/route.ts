@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { razorpay } from '@/lib/razorpay'
 import { getOrCreateRazorpayCustomer } from '@/lib/rzpcustomer'
+import type { Orders } from 'razorpay/dist/types/orders'
 
 export async function POST(req: Request) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       ? await getOrCreateRazorpayCustomer(donorEmail, donorName || '')
       : undefined
 
-    const orderPayload: Record<string, any> = {
+    const orderPayload: Orders.RazorpayOrderCreateRequestBody = {
       amount:   Math.round(amount),
       currency,
       receipt:  receipt || `receipt_${Date.now()}`,
@@ -37,8 +38,8 @@ export async function POST(req: Request) {
         donor_message: donorMessage?.trim() || '',
         description,
       },
+      ...(customerId && { customer_id: customerId }),
     }
-    if (customerId) orderPayload.customer_id = customerId
 
     const order = await razorpay.orders.create(orderPayload)
 

@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         ? await getOrCreateRazorpayCustomer(email, donorName || '')
         : undefined
 
-      const qrPayload: Record<string, any> = {
+      const qrPayload: Parameters<typeof razorpay.qrCode.create>[0] = {
         type:           'upi_qr',
         name:           `Donation-${Date.now()}`,
         usage:          'single_use',
@@ -67,8 +67,8 @@ export async function POST(req: Request) {
           donor_message: donorMessage?.trim() || '',
           description,
         },
+        ...(customerId && { customer_id: customerId }),
       }
-      if (customerId) qrPayload.customer_id = customerId
 
       const qrCode = await razorpay.qrCode.create(qrPayload)
 
