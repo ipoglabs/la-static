@@ -1,13 +1,8 @@
 // app/api/create-qr-payment/route.ts
-//
-// Creates QR-based payments:
-//   SG  → Stripe Payment Link QR (currency: sgd) — PayNow requires SG Stripe account
-//   IN  → Razorpay UPI QR (currency: inr)  — covers GPay, PhonePe, Paytm, BHIM
-//   GB  → Stripe Payment Link QR  (currency: gbp)
-//
 import Stripe from 'stripe'
 import { NextResponse } from 'next/server'
 import { razorpay } from '@/lib/razorpay'
+import { getOrCreateRazorpayCustomer } from '@/lib/rzpcustomer'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-05-27.dahlia',
@@ -15,7 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   try {
-    const { amount, country, donorName, email } = await req.json()
+    const { amount, country, donorName, email, donorMessage } = await req.json()
 
     if (!amount || amount < 1) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
@@ -27,8 +22,6 @@ export async function POST(req: Request) {
     const amountInSmallestUnit = Math.round(amount * 100)
 
     // ── Singapore: Stripe Payment Link QR (SGD) ──────────────────────────────
-    // PayNow requires a Singapore-registered Stripe account.
-    // Payment Link QR works with any Stripe account and accepts card/wallet.
     if (country === 'SG') {
       const product = await stripe.products.create({
         name: `Lokalads Donation — ${donorName || 'Anonymous'}`,
@@ -46,36 +39,44 @@ export async function POST(req: Request) {
           redirect: { url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'}/donate/status` },
         },
       })
-
-      return NextResponse.json({
-        method: 'payment_link',
-        paymentLinkUrl: link.url,
-        paymentLinkId: link.id,
-      })
+      return NextResponse.json({ method: 'payment_link', paymentLinkUrl: link.url, paymentLinkId: link.id })
     }
 
     // ── India: Razorpay UPI QR ────────────────────────────────────────────────
-    // Replaces the old Stripe `payment_method_types: ['upi']` PaymentIntent —
-    // Razorpay is the more standard gateway for receiving INR/UPI in India.
-    // Covers Google Pay, PhonePe, Paytm, BHIM, and all UPI apps via QR scan.
     if (country === 'IN') {
-      const qrCode = await razorpay.qrCode.create({
-        type: 'upi_qr',
-        name: `Donation-${Date.now()}`,
-        usage: 'single_use',
-        fixed_amount: true,
+      const description = donorMessage?.trim()
+        ? `Donation Lokalads - ${donorMessage.trim()}`
+        : 'Donation Lokalads'
+
+      // Get or create Razorpay customer (populates "Customer detail" in dashboard)
+      const customerId = email
+        ? await getOrCreateRazorpayCustomer(email, donorName || '')
+        : undefined
+
+      const qrPayload: Record<string, any> = {
+        type:           'upi_qr',
+        name:           `Donation-${Date.now()}`,
+        usage:          'single_use',
+        fixed_amount:   true,
         payment_amount: amountInSmallestUnit,
-        description: `Lokalads donation from ${donorName || 'Anonymous'}`,
-        // Razorpay requires close_by to be at least 15 minutes in the future
+        description,
         close_by: Math.floor(Date.now() / 1000) + 15 * 60,
-        notes: { donorName: donorName || 'Anonymous', email: email || '', country: 'IN' },
-      })
+        notes: {
+          donor_name:    donorName           || '',
+          donor_email:   email               || '',
+          donor_message: donorMessage?.trim() || '',
+          description,
+        },
+      }
+      if (customerId) qrPayload.customer_id = customerId
+
+      const qrCode = await razorpay.qrCode.create(qrPayload)
 
       return NextResponse.json({
-        method: 'razorpay_qr',
-        qrCodeId: qrCode.id,
-        qrImageUrl: qrCode.image_url, // ready-to-use hosted PNG, no client-side QR generation needed
-        closeBy: qrCode.close_by,
+        method:     'razorpay_qr',
+        qrCodeId:   qrCode.id,
+        qrImageUrl: qrCode.image_url,
+        closeBy:    qrCode.close_by,
       })
     }
 
@@ -97,16 +98,14 @@ export async function POST(req: Request) {
           redirect: { url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'}/donate/status` },
         },
       })
-
-      return NextResponse.json({
-        method: 'payment_link',
-        paymentLinkUrl: link.url,
-        paymentLinkId: link.id,
-      })
+      return NextResponse.json({ method: 'payment_link', paymentLinkUrl: link.url, paymentLinkId: link.id })
     }
   } catch (err: any) {
     console.error('QR payment error:', err)
     const status = err?.statusCode === 401 ? 401 : 500
-    return NextResponse.json({ error: err?.error?.description || err.message || 'QR payment creation failed' }, { status })
+    return NextResponse.json(
+      { error: err?.error?.description || err.message || 'QR payment creation failed' },
+      { status }
+    )
   }
 }

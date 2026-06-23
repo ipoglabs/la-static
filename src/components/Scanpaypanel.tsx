@@ -18,9 +18,9 @@ const COUNTRY_CONFIG = {
       "Open any Singapore banking app (DBS, OCBC, UOB, PayLah!, etc.).",
       "Tap Scan & Pay and scan the QR code below.",
       "Confirm the amount and complete payment in your app.",
-      "Stay on this page — you'll be redirected once Stripe detects the payment.",
+      "Stay on this page — you'll be redirected once payment is confirmed.",
     ],
-    note: "PayNow QR is valid for 10 minutes. Do not close this page.",
+    note: "Opens a secure Stripe checkout page. No fixed QR expiry is tracked here.",
   },
   IN: {
     label: 'India',
@@ -52,17 +52,22 @@ const COUNTRY_CONFIG = {
       "Pay securely with your card, Apple Pay, or Google Pay.",
       "A confirmation will appear on this page once done.",
     ],
-    note: "Opens a secure Stripe checkout page. No UK bank app required.",
+    note: "Opens a secure Stripe checkout page. No fixed QR expiry is tracked here.",
   },
 } as const
 
 type Country = keyof typeof COUNTRY_CONFIG
 
-// ─── QR Timer ─────────────────────────────────────────────────────────────────
-const QR_SECONDS = 10 * 60 // 10 min for PayNow; shown for all
+// Razorpay QR codes are created with a 15-minute close_by in
+// app/api/create-qr-payment/route.ts. Used as a fallback before the real
+// close_by comes back from the API. Stripe Payment Links (SG/GB) don't
+// carry a server-tracked expiry, so no countdown is shown for them.
+const RAZORPAY_QR_SECONDS = 15 * 60
 
-function QrTimer({ seconds = QR_SECONDS, onExpire }: { seconds?: number; onExpire?: () => void }) {
+// ─── QR Timer ─────────────────────────────────────────────────────────────────
+function QrTimer({ seconds, onExpire }: { seconds: number; onExpire?: () => void }) {
   const [secs, setSecs] = useState(seconds)
+  useEffect(() => { setSecs(seconds) }, [seconds])
   useEffect(() => {
     if (secs <= 0) { onExpire?.(); return }
     const id = setTimeout(() => setSecs(s => s - 1), 1000)
@@ -108,7 +113,10 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [apiError, setApiError] = useState('')
-  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null)
+  // Generic reference id used for status polling. For India this is
+  // Razorpay's qrCodeId — SG/GB don't poll (see generateQR below).
+  const [referenceId, setReferenceId] = useState<string | null>(null)
+  const [qrSeconds, setQrSeconds] = useState(RAZORPAY_QR_SECONDS)
   const [expired, setExpired] = useState(false)
   const pollRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -120,7 +128,7 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
     setApiError('')
     setQrDataUrl('')
     setExpired(false)
-    setPaymentIntentId(null)
+    setReferenceId(null)
     if (pollRef.current) clearInterval(pollRef.current)
 
     try {
@@ -132,47 +140,33 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to create QR payment')
 
-      // ── PayNow (SG): Stripe returns image URL directly ───────────────────
-      if (data.method === 'paynow' && data.qrImageUrl) {
-        setQrDataUrl(data.qrImageUrl)   // direct PNG from Stripe — no extra conversion
-        setPaymentIntentId(data.paymentIntentId)
-        startPolling(data.paymentIntentId)
-      }
-
-      // ── UPI (IN): confirm to get QR, or use clientSecret for PaymentElement
-      // For simplicity we generate a UPI collect QR via the VPA approach.
-      // Stripe's UPI flow on web shows a QR inside PaymentElement, but here
-      // we want our own UI, so we use the hosted URL approach:
-      else if (data.method === 'upi') {
-        // Stripe UPI: confirm with upi payment method to get the QR URL
-        const confirmRes = await fetch('/api/confirm-upi-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId: data.paymentIntentId }),
-        })
-        const confirmData = await confirmRes.json()
-        if (!confirmRes.ok) throw new Error(confirmData.error || 'UPI confirmation failed')
-
-        // Generate QR from the UPI payment link
-        if (confirmData.upiLink) {
-          const url = await QRCode.toDataURL(confirmData.upiLink, {
-            width: 240, margin: 1,
-            color: { dark: '#000000', light: '#ffffff' },
-          })
-          setQrDataUrl(url)
-          setPaymentIntentId(data.paymentIntentId)
-          startPolling(data.paymentIntentId)
+      // ── India: Razorpay UPI QR — image_url comes ready-made, no
+      // client-side QR generation needed ───────────────────────────────────
+      if (data.method === 'razorpay_qr' && data.qrImageUrl) {
+        setQrDataUrl(data.qrImageUrl)
+        setReferenceId(data.qrCodeId)
+        // Sync the on-screen countdown with Razorpay's actual close_by
+        // timestamp rather than assuming a fixed duration.
+        if (data.closeBy) {
+          const remaining = data.closeBy - Math.floor(Date.now() / 1000)
+          setQrSeconds(remaining > 0 ? remaining : 0)
         }
+        startPolling(data.qrCodeId)
       }
 
-      // ── Payment Link (GB): convert URL to QR ────────────────────────────
+      // ── Singapore / UK: Stripe Payment Link — convert URL to a QR
+      // client-side. No server-side polling here; the user lands on
+      // /donate/status after Stripe redirects them ───────────────────────
       else if (data.method === 'payment_link' && data.paymentLinkUrl) {
         const url = await QRCode.toDataURL(data.paymentLinkUrl, {
           width: 240, margin: 1,
           color: { dark: '#000000', light: '#ffffff' },
         })
         setQrDataUrl(url)
-        // GB payment link: no server-side polling; user lands on /donate/status after pay
+      }
+
+      else {
+        throw new Error('Unrecognized response from create-qr-payment')
       }
     } catch (err: any) {
       setApiError(err.message)
@@ -182,15 +176,18 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
     }
   }
 
-  // ── Poll Stripe for payment completion (SG/IN) ─────────────────────────────
-  const startPolling = (piId: string) => {
+  // ── Poll Razorpay for QR payment completion (India only) ──────────────────
+  const startPolling = (qrCodeId: string) => {
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/check-payment-status?paymentIntentId=${piId}`)
+        const res = await fetch(`/api/check-razorpay-qr-status?qrCodeId=${qrCodeId}`)
         const data = await res.json()
         if (data.status === 'succeeded') {
           clearInterval(pollRef.current!)
-          onSuccess(piId)
+          onSuccess(data.paymentId || qrCodeId)
+        } else if (data.status === 'expired') {
+          clearInterval(pollRef.current!)
+          setExpired(true)
         }
       } catch (_) { /* silent */ }
     }, 3000) // poll every 3 seconds
@@ -259,11 +256,10 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
         </div>
 
         {/* Stay-on-page warning */}
-        {country !== 'GB' && (
-          <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
-            <b>Keep this page open</b> until payment is confirmed. Polling every 3 seconds.
-          </div>
-        )}
+        <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          <b>Keep this page open</b> until payment is confirmed.
+          {country === 'IN' && ' Polling every 3 seconds.'}
+        </div>
       </div>
 
       {/* ── RIGHT: QR panel ─────────────────────────────────────────────────── */}
@@ -274,7 +270,7 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
 
         {/* QR box */}
         <div className="relative mb-5">
-          <div className="size-56 border-2 border-slate-300 rounded-xl p-1.5 bg-white shadow-sm flex items-center justify-center">
+          <div className="relative size-56 border-2 border-slate-300 rounded-xl bg-white shadow-sm overflow-hidden flex items-center justify-center">
             {loading ? (
               <div className="flex flex-col items-center gap-2">
                 <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none">
@@ -289,11 +285,23 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
                 <button onClick={generateQR} className="text-xs underline text-blue-600">Retry</button>
               </div>
             ) : qrDataUrl ? (
-              <img
-                src={qrDataUrl}
-                alt={`Scan to pay via ${cfg.method}`}
-                className="w-full h-full object-contain"
-              />
+              country === 'IN' ? (
+                // Razorpay's hosted UPI QR image is a full branded poster
+                // (logos, the QR itself, merchant name, etc). Scale + shift
+                // it so only the QR matrix itself is visible in the box,
+                // instead of shrinking the whole poster to fit.
+                <img
+                  src={qrDataUrl}
+                  alt={`Scan to pay via ${cfg.method}`}
+                  style={{ position: 'absolute', width: '160%', maxWidth: 'none', left: '-30%', top: '-150%' }}
+                />
+              ) : (
+                <img
+                  src={qrDataUrl}
+                  alt={`Scan to pay via ${cfg.method}`}
+                  className="w-full h-full object-contain p-1.5"
+                />
+              )
             ) : null}
           </div>
 
@@ -305,10 +313,10 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
           )}
         </div>
 
-        {/* Timer (only for PayNow + UPI) */}
-        {country !== 'GB' && !loading && qrDataUrl && (
+        {/* Timer — only India has a server-tracked expiry (Razorpay close_by) */}
+        {country === 'IN' && !loading && qrDataUrl && !expired && (
           <div className="w-56 mb-4">
-            <QrTimer seconds={country === 'SG' ? 600 : 300} onExpire={() => setExpired(true)} />
+            <QrTimer seconds={qrSeconds} onExpire={() => setExpired(true)} />
           </div>
         )}
 
@@ -336,8 +344,8 @@ export default function ScanPayPanel({ amount, donorName, email, onSuccess, onEr
           </button>
         )}
 
-        {/* Polling indicator */}
-        {paymentIntentId && !expired && (
+        {/* Polling indicator (India only) */}
+        {referenceId && !expired && (
           <div className="mt-4 flex items-center gap-1.5 text-xs text-slate-400">
             <span className="relative flex size-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />

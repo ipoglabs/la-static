@@ -175,7 +175,7 @@ export default function DonatePage() {
     if (!validate()) return
     setAmount(`£${rawAmt}`, rawAmt, 'GBP')
     setMethod('qr')
-    setDonor({ name: name.trim(), email: email.trim() })
+    setDonor({ name: name.trim(), email: email.trim(), message: message.trim() })
     router.push('/donate/review')
   }
 

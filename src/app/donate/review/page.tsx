@@ -2,13 +2,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import QRCode from 'qrcode'
+import Script from 'next/script'
 import Header from '@/components/Header'
 import { useDonationStore } from '@/app/store/donationStore'
 import StripeProvider from '@/components/StripeProvider'
 import CheckoutForm from '@/components/CheckoutForm'
 import { cn } from '@/lib/utils'
 import WalletPayButton from '@/components/WalletPayButton'
-import RazorpayCheckoutButton from '@/components/ Razorpaycheckoutbutton'
+import RazorpayCheckoutButton from '@/components/Razorpaycheckoutbutton'
 
 // ─── Step Progress Bar ────────────────────────────────────────────────────────
 const StepProgress = ({ step }: { step: number }) => {
@@ -148,8 +149,9 @@ export default function DonateReviewPage() {
   const router = useRouter()
   const { amount, amountRaw, method, donor, setStatus, setTransactionId } = useDonationStore()
 
-  const donorName  = donor?.name  ?? ''
-  const donorEmail = donor?.email ?? ''
+  const donorName    = donor?.name    ?? ''
+  const donorEmail   = donor?.email   ?? ''
+  const donorMessage = donor?.message ?? ''
 
   const [mounted, setMounted]             = useState(false)
   const [activeTab, setActiveTab]         = useState<Tab>('cc')
@@ -174,6 +176,7 @@ export default function DonateReviewPage() {
 
   // ── Razorpay state (India — Wallet Pay & Card Pay tabs) ────────────────────
   const [rzpError, setRzpError]           = useState('')
+  const [rzpScriptLoaded, setRzpScriptLoaded] = useState(false)
 
   // Payment currency — derived directly from the selected country on every
   // render (not stored in its own state + useEffect). Doing this as state
@@ -228,6 +231,7 @@ export default function DonateReviewPage() {
           country: scanCountry,
           donorName,
           email: donorEmail,
+          donorMessage,
         }),
       })
       const data = await res.json()
@@ -371,6 +375,13 @@ export default function DonateReviewPage() {
 
   return (
     <div className="bg-white min-w-[375px] min-h-screen flex flex-col">
+
+      {/* Load Razorpay script once for the whole page */}
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+        onLoad={() => setRzpScriptLoaded(true)}
+      />
 
       {/* ── Header + step bar ───────────────────────────────────────────── */}
       <header className="border-b border-slate-200 shadow-md">
@@ -558,7 +569,7 @@ export default function DonateReviewPage() {
 
                   {/* QR Code box */}
                   <div className="relative mb-6">
-                    <div className="size-56 border-2 border-slate-300 rounded-xl p-1.5 bg-white shadow-sm flex items-center justify-center">
+                    <div className="relative size-56 border-2 border-slate-300 rounded-xl bg-white shadow-sm overflow-hidden flex items-center justify-center">
                       {scanLoading ? (
                         <div className="flex flex-col items-center gap-2">
                           <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none">
@@ -573,7 +584,19 @@ export default function DonateReviewPage() {
                           <button onClick={generateScanQr} className="text-xs underline text-blue-600">Retry</button>
                         </div>
                       ) : scanQrUrl ? (
-                        <img src={scanQrUrl} alt={`Scan to pay via ${scanCfg.badge}`} className="w-full h-full object-contain" />
+                        scanCountry === 'IN' ? (
+                          // Razorpay's hosted UPI QR image is a full branded poster
+                          // (logos, the QR itself, merchant name, etc). Scale + shift
+                          // it so only the QR matrix itself is visible in the box,
+                          // instead of shrinking the whole poster to fit.
+                          <img
+                            src={scanQrUrl}
+                            alt={`Scan to pay via ${scanCfg.badge}`}
+                            style={{ position: 'absolute', width: '160%', maxWidth: 'none', left: '-30%', top: '-150%' }}
+                          />
+                        ) : (
+                          <img src={scanQrUrl} alt={`Scan to pay via ${scanCfg.badge}`} className="w-full h-full object-contain p-1.5" />
+                        )
                       ) : null}
                     </div>
                     {!scanLoading && !scanError && scanQrUrl && (
@@ -743,11 +766,13 @@ export default function DonateReviewPage() {
                       <RazorpayCheckoutButton
                         amountInRupees={amountRaw}
                         donorName={donorName}
+                        donorMessage={donorMessage}
                         email={donorEmail}
                         method="wallet"
                         wallet={indiaWalletMethod}
                         label={`Pay with ${{ paytm: 'Paytm', amazonpay: 'Amazon Pay', mobikwik: 'MobiKwik', freecharge: 'Freecharge' }[indiaWalletMethod]}`}
                         className="w-full bg-[#3399cc] hover:bg-[#2d86b3] disabled:opacity-50 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                        scriptLoaded={rzpScriptLoaded}
                         onSuccess={handleSuccess}
                         onError={handleRazorpayError}
                       />
@@ -855,27 +880,21 @@ export default function DonateReviewPage() {
               <div className="flex flex-col items-center w-full max-md:px-4">
                 {scanCountry === 'IN' ? (
                   <>
-                    {/* API error */}
-                    {rzpError && (
-                      <div className="w-full rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-3">
-                        {rzpError}
-                      </div>
-                    )}
-
                     {/* Secure note */}
-                    {!rzpError && (
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 text-green-600 shrink-0">
-                          <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
-                        </svg>
-                        Encrypted &amp; processed securely via Razorpay. We never store your card details.
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 text-green-600 shrink-0">
+                        <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
+                      </svg>
+                      Encrypted &amp; processed securely via Razorpay. We never store your card details.
+                    </div>
 
+                    {/* Inline card form — no modal */}
                     <RazorpayCheckoutButton
                       amountInRupees={amountRaw}
                       donorName={donorName}
+                      donorMessage={donorMessage}
                       email={donorEmail}
+                      scriptLoaded={rzpScriptLoaded}
                       onSuccess={handleSuccess}
                       onError={handleRazorpayError}
                     />
